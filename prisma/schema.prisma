@@ -1,0 +1,109 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  email     String  @unique
+  name      String
+  password  String
+  role      String  @default("customer")
+  createdAt DateTime @default(now())
+  
+  interactions UserInteraction[]
+  orders       Order[]
+  
+  @@map("users")
+}
+
+model Category {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  slug      String  @unique
+  description String?
+  createdAt DateTime @default(now())
+  
+  products  Product[]
+  interactions UserInteraction[]
+  
+  @@map("categories")
+}
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String  @db.LongText
+  price       Float
+  image       String
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  inStock     Boolean @default(true)
+  cashbackRate Float @default(0)
+  vendor      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  interactions UserInteraction[]
+  orderItems   OrderItem[]
+  
+  @@map("products")
+}
+
+model UserInteraction {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  categoryId Int
+  category  Category @relation(fields: [categoryId], references: [id])
+  interactionType String // "view", "click", "purchase"
+  viewedAt  DateTime @default(now())
+  
+  @@index([userId])
+  @@index([productId])
+  @@index([categoryId])
+  @@map("user_interactions")
+}
+
+model NewProductDaily {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  product   Product @relation("NewProductDaily", fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@unique([productId, createdAt])
+  @@map("new_products_daily")
+}
+
+model Order {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalAmount Float
+  status    String  @default("pending")
+  createdAt DateTime @default(now())
+  
+  items     OrderItem[]
+  
+  @@index([userId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  
+  @@map("order_items")
+}

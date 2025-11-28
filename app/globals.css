@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #047857;
+  --primary-dark: #065f46;
+  --secondary: #0f766e;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --border: #e2e8f0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #111827;
+    --foreground: #f3f4f6;
+    --card: #1f2937;
+    --card-foreground: #f3f4f6;
+    --border: #374151;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 80px;
+  /* Space for bottom nav */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+.gradient-bg {
+  position: relative;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+}
+
+.gradient-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    linear-gradient(30deg, rgba(255, 255, 255, .25) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, .25) 87.5%, rgba(255, 255, 255, .25)),
+    linear-gradient(150deg, rgba(255, 255, 255, .25) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, .25) 87.5%, rgba(255, 255, 255, .25)),
+    linear-gradient(30deg, rgba(255, 255, 255, .15) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, .15) 87.5%, rgba(255, 255, 255, .15)),
+    linear-gradient(150deg, rgba(255, 255, 255, .15) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, .15) 87.5%, rgba(255, 255, 255, .15)),
+    linear-gradient(60deg, rgba(0, 0, 0, .15) 25%, transparent 25.5%, transparent 75%, rgba(0, 0, 0, .15) 75%, rgba(0, 0, 0, .15)),
+    linear-gradient(60deg, rgba(0, 0, 0, .1) 25%, transparent 25.5%, transparent 75%, rgba(0, 0, 0, .1) 75%, rgba(0, 0, 0, .1));
+  background-size: 50px 87px;
+  background-position: 0 0, 0 0, 25px 43.5px, 25px 43.5px, 0 0, 25px 43.5px;
+  opacity: 0.8;
+  z-index: 0;
+}
+
+.gradient-bg>* {
+  position: relative;
+  z-index: 1;
+}
+
+.card-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Input Styling */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
