@@ -21,6 +21,7 @@ export default function UserDashboard() {
         address: '',
         city: ''
     });
+    const [recommendedProducts, setRecommendedProducts] = useState([]);
 
     useEffect(() => {
         const currentUser = getCurrentUser();
@@ -50,6 +51,19 @@ export default function UserDashboard() {
                 }
             ]);
         }
+
+        // Fetch recommended products
+        const fetchRecommendedProducts = async () => {
+            if (currentUser) {
+                const response = await fetch(`/api/products/for-you?userId=${currentUser.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setRecommendedProducts(data.products);
+                }
+            }
+        };
+
+        fetchRecommendedProducts();
     }, [router]);
 
     const handleLogout = () => {
@@ -153,6 +167,23 @@ export default function UserDashboard() {
                         </div>
                     </div>
                 </div>
+
+                {/* For You Section */}
+                {recommendedProducts.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">For You</h3>
+                        <div className="flex overflow-x-auto space-x-4 pb-4">
+                            {recommendedProducts.map(product => (
+                                <div key={product.id} className="flex-shrink-0 w-48 bg-gray-50 rounded-lg p-3">
+                                    <img src={product.image} alt={product.name} className="w-full h-24 object-cover rounded-md mb-2" />
+                                    <p className="font-bold text-sm text-gray-800 truncate">{product.name}</p>
+                                    <p className="text-emerald-600 font-semibold">TZS {product.price.toLocaleString()}</p>
+                                    <button className="w-full mt-2 bg-emerald-600 text-white text-xs py-1 rounded-md hover:bg-emerald-700 transition-colors">Add to Cart</button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Profile & Orders Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

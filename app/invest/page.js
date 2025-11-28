@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, Info, CheckCircle, AlertCircle } from 'lucide-react';
+import { TrendingUp, Info, CheckCircle, AlertCircle, BookOpen, Lightbulb, Award, X, Cog } from 'lucide-react';
 import Modal from '../../components/Modal';
 import Toast from '../../components/Toast';
 import { INVESTMENT_TYPES, calculateInvestmentCost, validateInvestment, addInvestment, getInvestments } from '../../lib/investments';
@@ -15,10 +15,40 @@ export default function InvestPage() {
     const [toast, setToast] = useState(null);
     const [portfolio, setPortfolio] = useState([]);
     const [wallet, setWallet] = useState(null);
+    const [uttAccountNumber, setUttAccountNumber] = useState('');
+    const [selectedFund, setSelectedFund] = useState('');
+    const [mPesaNumber, setMPesaNumber] = useState('');
+    const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
+    const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+    const [autoInvestEnabled, setAutoInvestEnabled] = useState(false);
+    const [autoInvestPercentage, setAutoInvestPercentage] = useState(10);
+
+    const successStories = [
+        { name: 'Sarah', location: 'Dar es Salaam', initial: 5000, final: 150000, years: 2 },
+        { name: 'John', location: 'Arusha', initial: 10000, final: 250000, years: 3 },
+        { name: 'Fatima', location: 'Mwanza', initial: 7000, final: 180000, years: 2.5 },
+        { name: 'David', location: 'Dodoma', initial: 3000, final: 120000, years: 4 },
+        { name: 'Grace', location: 'Zanzibar', initial: 15000, final: 300000, years: 3 },
+        { name: 'Peter', location: 'Morogoro', initial: 8000, final: 200000, years: 2 },
+        { name: 'Mary', location: 'Tanga', initial: 6000, final: 160000, years: 3.5 },
+        { name: 'Joseph', location: 'Iringa', initial: 4000, final: 130000, years: 2 },
+        { name: 'Esther', location: 'Mbeya', initial: 12000, final: 280000, years: 4 },
+        { name: 'Michael', location: 'Singida', initial: 9000, final: 220000, years: 3 },
+        { name: 'Anna', location: 'Kigoma', initial: 5500, final: 170000, years: 2.5 },
+        { name: 'James', location: 'Lindi', initial: 7500, final: 190000, years: 3 },
+        { name: 'Rose', location: 'Ruvuma', initial: 3500, final: 110000, years: 4.5 },
+        { name: 'Daniel', location: 'Pwani', initial: 11000, final: 260000, years: 2 },
+        { name: 'Catherine', location: 'Manyara', initial: 8500, final: 210000, years: 3 },
+    ];
 
     useEffect(() => {
         setPortfolio(getInvestments());
         setWallet(getWallet());
+
+        // Load auto-invest settings
+        const savedSettings = storage.get(STORAGE_KEYS.AUTO_INVEST_SETTINGS, { enabled: false, percentage: 10 });
+        setAutoInvestEnabled(savedSettings.enabled);
+        setAutoInvestPercentage(savedSettings.percentage);
     }, []);
 
     useEffect(() => {
@@ -29,9 +59,52 @@ export default function InvestPage() {
         }
     }, [selectedType, amount]);
 
+    useEffect(() => {
+        const storyInterval = setInterval(() => {
+            setCurrentStoryIndex(prevIndex => (prevIndex + 1) % successStories.length);
+        }, 5000);
+
+        return () => clearInterval(storyInterval);
+    }, [successStories.length]);
+
+    const handleAutoInvestToggle = () => {
+        const newEnabledState = !autoInvestEnabled;
+        setAutoInvestEnabled(newEnabledState);
+        storage.set(STORAGE_KEYS.AUTO_INVEST_SETTINGS, { enabled: newEnabledState, percentage: autoInvestPercentage });
+        setToast({
+            type: 'success',
+            message: `Auto-Invest ${newEnabledState ? 'Enabled' : 'Disabled'}`
+        });
+    };
+
     const handleInvest = (e) => {
         e.preventDefault();
         const investAmount = Number(amount);
+
+        // Validate UTT-specific fields
+        if (selectedType.id === 'utt') {
+            if (!uttAccountNumber.trim()) {
+                setToast({ type: 'error', message: 'Please enter your UTT account number' });
+                return;
+            }
+            if (!selectedFund) {
+                setToast({ type: 'error', message: 'Please select a fund' });
+                return;
+            }
+        }
+
+        // Validate M-Wekeza specific fields
+        if (selectedType.id === 'mwekeza') {
+            const mPesaRegex = /^255[67]\d{8}$/;
+            if (!mPesaNumber.trim()) {
+                setToast({ type: 'error', message: 'Please enter your M-Pesa number' });
+                return;
+            }
+            if (!mPesaRegex.test(mPesaNumber)) {
+                setToast({ type: 'error', message: 'Invalid M-Pesa number format. Use 255xxxxxxxxx' });
+                return;
+            }
+        }
 
         // Validate
         const validation = validateInvestment(selectedType.id, investAmount);
@@ -56,12 +129,17 @@ export default function InvestPage() {
                 typeName: selectedType.name,
                 amount: investAmount,
                 fee: costPreview.fee,
-                returnRate: selectedType.options?.[0]?.return || 'Market Based'
+                returnRate: selectedType.options?.[0]?.return || 'Market Based',
+                ...(selectedType.id === 'utt' && { uttAccountNumber, selectedFund }),
+                ...(selectedType.id === 'mwekeza' && { mPesaNumber })
             });
 
             setToast({ type: 'success', message: 'Investment successful!' });
             setSelectedType(null);
             setAmount('');
+            setUttAccountNumber('');
+            setSelectedFund('');
+            setMPesaNumber('');
             setPortfolio(getInvestments());
             setWallet(getWallet());
         } else {
@@ -81,6 +159,34 @@ export default function InvestPage() {
                     <TrendingUp size={16} className="text-green-400" />
                     <span>+12.5% Annual Return (Avg)</span>
                 </div>
+            </div>
+
+            {/* Auto-Invest Section */}
+            <div className="bg-gray-800 dark:bg-gray-900 rounded-2xl p-4 text-white shadow-lg flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                    <div className="bg-blue-600 p-2 rounded-lg">
+                        <Cog size={24} />
+                    </div>
+                    <div>
+                        <h3 className="font-bold">Auto-Invest</h3>
+                        <p className="text-sm text-gray-400">Invest {autoInvestPercentage}% of cashback</p>
+                    </div>
+                </div>
+                <button onClick={handleAutoInvestToggle} className={`w-12 h-6 rounded-full flex items-center transition-colors ${autoInvestEnabled ? 'bg-green-500' : 'bg-gray-600'}`}>
+                    <span className={`inline-block w-5 h-5 bg-white rounded-full transform transition-transform ${autoInvestEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+            </div>
+
+            {/* Financial Education Section */}
+            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-6 text-white shadow-lg">
+                <div className="flex items-center space-x-3 mb-3">
+                    <BookOpen size={28} />
+                    <h3 className="text-xl font-bold">Financial Education</h3>
+                </div>
+                <p className="text-blue-100 mb-4">Learn how to make your money work for you</p>
+                <button onClick={() => setIsEducationModalOpen(true)} className="w-full bg-white/20 hover:bg-white/30 p-3 rounded-lg font-medium transition-colors">
+                    View Tips & Education
+                </button>
             </div>
 
             {/* Investment Options */}
@@ -149,42 +255,96 @@ export default function InvestPage() {
                 onClose={() => {
                     setSelectedType(null);
                     setAmount('');
+                    setUttAccountNumber('');
+                    setSelectedFund('');
+                    setMPesaNumber('');
                 }}
-                title={`Invest in ${selectedType?.name}`}
+                title={`${selectedType?.name} Investment`}
             >
                 {selectedType && (
                     <form onSubmit={handleInvest} className="space-y-4">
-                        <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800">
-                            <div className="flex items-start space-x-2">
-                                <Info size={16} className="mt-0.5 flex-shrink-0" />
-                                <p>{selectedType.description}</p>
-                            </div>
+                        {/* Fee Info */}
+                        <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-xl text-sm">
+                            <p className="text-blue-700 dark:text-blue-300 font-semibold">
+                                Investment Fee: 1% of amount
+                            </p>
                         </div>
 
+                        {/* Investment Amount */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Amount to Invest</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Investment Amount</label>
                             <input
                                 type="number"
                                 required
                                 min={selectedType.minAmount}
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
-                                className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500"
-                                placeholder={`Min. ${selectedType.minAmount.toLocaleString()}`}
+                                className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                placeholder={`Minimum TZS ${selectedType.minAmount.toLocaleString()}`}
                             />
                         </div>
 
+                        {/* UTT-specific fields */}
+                        {selectedType.id === 'utt' && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">UTT Account Number</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={uttAccountNumber}
+                                        onChange={(e) => setUttAccountNumber(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                        placeholder="Enter UTT account number"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fund Name</label>
+                                    <select
+                                        required
+                                        value={selectedFund}
+                                        onChange={(e) => setSelectedFund(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                    >
+                                        <option value="">Select Fund</option>
+                                        {selectedType.options.map((opt) => (
+                                            <option key={opt.id} value={opt.id}>
+                                                {opt.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </>
+                        )}
+
+                        {/* M-Wekeza-specific fields */}
+                        {selectedType.id === 'mwekeza' && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">M-Pesa Number</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={mPesaNumber}
+                                    onChange={(e) => setMPesaNumber(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                                    placeholder="255712345678"
+                                />
+                            </div>
+                        )}
+
+                        {/* Cost Preview */}
                         {costPreview && (
-                            <div className="space-y-2 text-sm border-t pt-3">
-                                <div className="flex justify-between text-gray-600">
+                            <div className="space-y-2 text-sm border-t dark:border-gray-600 pt-3">
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                     <span>Investment Amount</span>
                                     <span>TZS {costPreview.amount.toLocaleString()}</span>
                                 </div>
-                                <div className="flex justify-between text-gray-600">
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                     <span>Platform Fee (1%)</span>
                                     <span>TZS {costPreview.fee.toLocaleString()}</span>
                                 </div>
-                                <div className="flex justify-between font-bold text-gray-900 pt-1">
+                                <div className="flex justify-between font-bold text-gray-900 dark:text-white pt-1">
                                     <span>Total Cost</span>
                                     <span>TZS {costPreview.total.toLocaleString()}</span>
                                 </div>
@@ -193,9 +353,9 @@ export default function InvestPage() {
 
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                            className="w-full bg-green-600 dark:bg-green-700 text-white py-3 rounded-xl font-bold hover:bg-green-700 dark:hover:bg-green-800 transition-colors"
                         >
-                            Confirm Investment
+                            Invest Now
                         </button>
                     </form>
                 )}
@@ -207,6 +367,72 @@ export default function InvestPage() {
                     type={toast.type}
                     onClose={() => setToast(null)}
                 />
+            )}
+
+            {/* Education Modal */}
+            {isEducationModalOpen && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-end">
+                    <div className="bg-gray-50 dark:bg-gray-900 w-full rounded-t-2xl p-4 space-y-4 max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom pb-20">
+                        <div className="flex items-center justify-between pb-2 border-b dark:border-gray-700">
+                            <div className="flex items-center space-x-2">
+                                <Lightbulb className="text-yellow-500" size={24} />
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Financial Tips & Education</h2>
+                            </div>
+                            <button onClick={() => setIsEducationModalOpen(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* This Week's Tip */}
+                        <div className="bg-gradient-to-r from-green-400 to-blue-500 rounded-xl p-4 text-white">
+                            <h3 className="font-bold">This Week's Tip</h3>
+                            <p className="text-sm mt-1">The 50/30/20 rule: Spend 50% on needs, 30% on wants, and save/invest 20% of your income for a secure financial future.</p>
+                        </div>
+
+                        {/* Other Tips */}
+                        <div className="space-y-3 pt-2">
+                            <div className="flex items-start space-x-3">
+                                <div className="w-1.5 h-10 bg-purple-500 rounded-full"></div>
+                                <div>
+                                    <h4 className="font-bold text-gray-800 dark:text-gray-200">Start Small, Think Big</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Even TZS 1,000 invested monthly can grow to over TZS 100,000 in 5 years with compound interest!</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start space-x-3">
+                                <div className="w-1.5 h-10 bg-green-500 rounded-full"></div>
+                                <div>
+                                    <h4 className="font-bold text-gray-800 dark:text-gray-200">Diversify Your Investments</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Don't put all your money in one place. Mix UTT funds, bonds, and stocks to reduce risk.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start space-x-3">
+                                <div className="w-1.5 h-10 bg-blue-500 rounded-full"></div>
+                                <div>
+                                    <h4 className="font-bold text-gray-800 dark:text-gray-200">Emergency Fund First</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Before investing, save 3-6 months of expenses in your wallet for emergencies.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start space-x-3">
+                                <div className="w-1.5 h-10 bg-orange-500 rounded-full"></div>
+                                <div>
+                                    <h4 className="font-bold text-gray-800 dark:text-gray-200">Use Auto-Invest</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Set up auto-invest to automatically invest a portion of your rewards. It's the easiest way to build wealth!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Success Story */}
+                        <div className="bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mt-4">
+                            <div className="flex items-center space-x-2">
+                                <Award className="text-yellow-600 dark:text-yellow-500" size={20} />
+                                <h4 className="font-bold text-yellow-800 dark:text-yellow-300">Success Story</h4>
+                            </div>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-200 mt-2 italic">
+                                {`"I started with just TZS ${successStories[currentStoryIndex].initial.toLocaleString()} from my RewaMart rewards. After ${successStories[currentStoryIndex].years} years of consistent investing, I now have over TZS ${successStories[currentStoryIndex].final.toLocaleString()}!" - ${successStories[currentStoryIndex].name}, ${successStories[currentStoryIndex].location}`}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

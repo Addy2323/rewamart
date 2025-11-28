@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Settings, HelpCircle, LogOut, ChevronRight, Bell, Shield, LayoutDashboard } from 'lucide-react';
-import { getCurrentUser, logoutUser } from '../../lib/auth';
+import { User, Settings, HelpCircle, LogOut, ChevronRight, Bell, Shield, LayoutDashboard, Smartphone, Shirt, Home, HeartPulse } from 'lucide-react';
+import { getCurrentUser, logoutUser, updateUserProfile } from '../../lib/auth';
 import { getTheme, setTheme } from '../../lib/theme';
 import Toast from '../../components/Toast';
 
@@ -30,6 +30,15 @@ export default function ProfilePage() {
         confirmPassword: ''
     });
     const [showPasswordForm, setShowPasswordForm] = useState(false);
+
+    const CATEGORIES = [
+        { id: 'electronics', name: 'Electronics', icon: Smartphone },
+        { id: 'fashion', name: 'Fashion', icon: Shirt },
+        { id: 'home', name: 'Home & Garden', icon: Home },
+        { id: 'health', name: 'Health & Beauty', icon: HeartPulse },
+    ];
+
+    const [preferredCategories, setPreferredCategories] = useState(['electronics', 'health']);
 
     useEffect(() => {
         const currentUser = getCurrentUser();
@@ -60,6 +69,29 @@ export default function ProfilePage() {
             handleDashboard();
         } else {
             setActiveModal(action);
+        }
+    };
+
+    const handleCategoryChange = (categoryId) => {
+        setPreferredCategories(prev =>
+            prev.includes(categoryId)
+                ? prev.filter(id => id !== categoryId)
+                : [...prev, categoryId]
+        );
+    };
+
+    const handleSavePreferences = () => {
+        if (!user) {
+            setToast({ type: 'error', message: 'You must be logged in to save preferences.' });
+            return;
+        }
+
+        const result = updateUserProfile(user.id, { preferredCategories });
+
+        if (result.success) {
+            setToast({ type: 'success', message: 'Preferences saved successfully!' });
+        } else {
+            setToast({ type: 'error', message: result.error });
         }
     };
 
@@ -140,6 +172,34 @@ export default function ProfilePage() {
                         </span>
                     )}
                 </div>
+            </div>
+
+            {/* Preferred Categories */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Preferred Categories</h3>
+                <div className="grid grid-cols-2 gap-4">
+                    {CATEGORIES.map((category) => {
+                        const Icon = category.icon;
+                        return (
+                            <label key={category.id} className="flex items-center space-x-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={preferredCategories.includes(category.id)}
+                                    onChange={() => handleCategoryChange(category.id)}
+                                    className="h-5 w-5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300"
+                                />
+                                <Icon className="h-6 w-6 text-gray-500" />
+                                <span className="font-medium text-gray-700 dark:text-gray-300">{category.name}</span>
+                            </label>
+                        );
+                    })}
+                </div>
+                <button
+                    onClick={handleSavePreferences}
+                    className="w-full mt-4 bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700 transition-colors"
+                >
+                    Save Preferences
+                </button>
             </div>
 
             {/* Menu */}
