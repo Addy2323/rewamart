@@ -6,6 +6,7 @@ import Modal from '../../components/Modal';
 import Toast from '../../components/Toast';
 import { INVESTMENT_TYPES, calculateInvestmentCost, validateInvestment, addInvestment, getInvestments } from '../../lib/investments';
 import { deductFunds, getWallet } from '../../lib/wallet';
+import { storage, STORAGE_KEYS } from '../../lib/storage';
 
 export default function InvestPage() {
     const [activeTab, setActiveTab] = useState('all');
