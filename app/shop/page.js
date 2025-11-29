@@ -12,6 +12,7 @@ import { getAllProducts } from '../../lib/products';
 import { addFunds, toggleAutoInvest, getWallet, processPurchase } from '../../lib/wallet';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { getProductReviews, addReview } from '../../lib/reviews';
+import { processReferralReward, processReferralPurchase } from '../../lib/referrals';
 
 export default function ShopPage() {
     const [activeCategory, setActiveCategory] = useState('all');
@@ -30,14 +31,15 @@ export default function ShopPage() {
     const [newTodayProducts, setNewTodayProducts] = useState([]);
     const [randomProducts, setRandomProducts] = useState([]);
     const [user, setUser] = useState(null);
+    const [referralDiscount, setReferralDiscount] = useState(0);
 
     useEffect(() => {
         // Load products with dynamic cashback
         const allProducts = getAllProducts();
-        let filtered = activeCategory === 'all' 
-            ? allProducts 
+        let filtered = activeCategory === 'all'
+            ? allProducts
             : allProducts.filter(p => p.category === activeCategory);
-        
+
         if (searchQuery) {
             filtered = filtered.filter(p =>
                 p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -69,6 +71,20 @@ export default function ShopPage() {
         // Fetch random products
         fetchRandomProducts();
     }, []);
+
+    // Calculate referral discount whenever cart changes
+    useEffect(() => {
+        const appliedCode = storage.get(STORAGE_KEYS.APPLIED_REFERRAL_CODE);
+        const hasMadePurchase = storage.get(STORAGE_KEYS.HAS_MADE_PURCHASE);
+
+        if (appliedCode && !hasMadePurchase && cart.length > 0) {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            const discount = Math.floor(total * 0.10);
+            setReferralDiscount(discount);
+        } else {
+            setReferralDiscount(0);
+        }
+    }, [cart]);
 
     const fetchRecommendedProducts = async (userId) => {
         try {
@@ -114,6 +130,7 @@ export default function ShopPage() {
     };
 
     const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
+    const finalTotal = cartTotal - referralDiscount;
     const potentialCashback = cart.reduce((sum, item) => sum + (item.price * item.cashback), 0);
 
     const handleCheckout = async () => {
@@ -123,19 +140,35 @@ export default function ShopPage() {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Process purchase (Cashback + Auto-Invest)
-        const result = processPurchase(cartTotal, potentialCashback);
+        const result = processPurchase(finalTotal, potentialCashback);
+
+        let referralMessage = '';
+
+        // If a referral code was used, process the complete referral flow
+        const appliedCode = storage.get(STORAGE_KEYS.APPLIED_REFERRAL_CODE);
+        const hasMadePurchase = storage.get(STORAGE_KEYS.HAS_MADE_PURCHASE);
+
+        if (appliedCode && !hasMadePurchase) {
+            const referralResult = processReferralPurchase(finalTotal, appliedCode);
+            storage.set(STORAGE_KEYS.HAS_MADE_PURCHASE, true);
+            storage.remove(STORAGE_KEYS.APPLIED_REFERRAL_CODE);
+
+            referralMessage = ` Plus TZS ${referralResult.inviteeBonus.toLocaleString()} referral bonus added to your wallet!`;
+        }
 
         // Clear cart
         setCart([]);
         storage.set(STORAGE_KEYS.CART, []);
         setIsCheckingOut(false);
         setIsCartOpen(false);
+        setReferralDiscount(0);
 
         // Construct success message
         let message = `Purchase successful! Earned TZS ${result.cashbackEarned.toLocaleString()} cashback.`;
         if (result.investedAmount > 0) {
             message += ` Auto-invested TZS ${result.investedAmount.toLocaleString()}.`;
         }
+        message += referralMessage;
 
         setToast({ type: 'success', message });
     };
@@ -338,6 +371,12 @@ export default function ShopPage() {
                                 <span className="text-gray-600">Subtotal</span>
                                 <span className="font-bold">TZS {cartTotal.toLocaleString()}</span>
                             </div>
+                            {referralDiscount > 0 && (
+                                <div className="flex justify-between text-sm text-blue-600">
+                                    <span>Referral Bonus (10%)</span>
+                                    <span className="font-bold">- TZS {referralDiscount.toLocaleString()}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-sm text-green-600">
                                 <span>Est. Cashback</span>
                                 <span className="font-bold">+ TZS {potentialCashback.toLocaleString()}</span>
@@ -348,7 +387,7 @@ export default function ShopPage() {
                                 disabled={isCheckingOut}
                                 className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold mt-4 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                             >
-                                {isCheckingOut ? 'Processing...' : `Checkout (TZS ${cartTotal.toLocaleString()})`}
+                                {isCheckingOut ? 'Processing...' : `Checkout (TZS ${finalTotal.toLocaleString()})`}
                             </button>
                         </div>
                     </div>
@@ -476,11 +515,10 @@ export default function ShopPage() {
                                     <button
                                         key={rating}
                                         onClick={() => setReviewData({ ...reviewData, rating })}
-                                        className={`p-2 rounded-lg transition-colors ${
-                                            reviewData.rating >= rating
-                                                ? 'bg-yellow-400 text-white'
-                                                : 'bg-gray-200 text-gray-600'
-                                        }`}
+                                        className={`p-2 rounded-lg transition-colors ${reviewData.rating >= rating
+                                            ? 'bg-yellow-400 text-white'
+                                            : 'bg-gray-200 text-gray-600'
+                                            }`}
                                     >
                                         <Star size={20} className="fill-current" />
                                     </button>

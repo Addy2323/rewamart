@@ -64,7 +64,7 @@ export default function WalletPage() {
         });
     };
 
-    if (!wallet) return <div className="p-8 text-center">Loading...</div>;
+    if (!wallet) return <div className="p-8 text-center text-gray-900 dark:text-white">Loading...</div>;
 
     return (
         <div className="p-4 space-y-6 pb-24 animate-fade-in dark:bg-gray-900 transition-colors">

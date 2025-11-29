@@ -163,13 +163,13 @@ export default function InvestPage() {
             </div>
 
             {/* Auto-Invest Section */}
-            <div className="bg-gray-800 dark:bg-gray-900 rounded-2xl p-4 text-white shadow-lg flex items-center justify-between">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-gray-900 dark:text-white shadow-lg flex items-center justify-between border dark:border-gray-700">
                 <div className="flex items-center space-x-3">
                     <div className="bg-blue-600 p-2 rounded-lg">
                         <Cog size={24} />
                     </div>
                     <div>
-                        <h3 className="font-bold">Auto-Invest</h3>
+                        <h3 className="font-bold dark:text-white">Auto-Invest</h3>
                         <p className="text-sm text-gray-400">Invest {autoInvestPercentage}% of cashback</p>
                     </div>
                 </div>
@@ -393,7 +393,7 @@ export default function InvestPage() {
                         {/* Other Tips */}
                         <div className="space-y-3 pt-2">
                             <div className="flex items-start space-x-3">
-                                <div className="w-1.5 h-10 bg-purple-500 rounded-full"></div>
+                                <div className="w-1.5 h-10 bg-blue-500 rounded-full"></div>
                                 <div>
                                     <h4 className="font-bold text-gray-800 dark:text-gray-200">Start Small, Think Big</h4>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Even TZS 1,000 invested monthly can grow to over TZS 100,000 in 5 years with compound interest!</p>

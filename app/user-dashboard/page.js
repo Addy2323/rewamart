@@ -38,19 +38,19 @@ export default function UserDashboard() {
             setProfile(userData.profile);
         }
 
-        // Load orders from cart history (simulated)
-        const cart = storage.get(STORAGE_KEYS.CART, []);
-        if (cart.length > 0) {
-            setOrders([
-                {
-                    id: 'ORD-001',
-                    date: new Date().toLocaleDateString(),
-                    items: cart.length,
-                    total: cart.reduce((sum, item) => sum + item.price, 0),
-                    status: 'Completed'
-                }
-            ]);
-        }
+        // Load real orders from transactions
+        const allTransactions = storage.get(STORAGE_KEYS.TRANSACTIONS, []);
+        const purchaseTransactions = allTransactions
+            .filter(t => t.type === 'purchase')
+            .map(t => ({
+                id: t.id,
+                date: new Date(t.date).toLocaleDateString(),
+                items: t.items || 1, // Fallback if items count not stored
+                total: t.amount,
+                status: 'Completed'
+            }));
+
+        setOrders(purchaseTransactions);
 
         // Fetch recommended products
         const fetchRecommendedProducts = async () => {
@@ -83,7 +83,7 @@ export default function UserDashboard() {
     };
 
     if (!user) {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+        return <div className="min-h-screen flex items-center justify-center text-gray-900 dark:text-white">Loading...</div>;
     }
 
     return (

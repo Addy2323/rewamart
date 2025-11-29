@@ -122,7 +122,7 @@ export default function VendorDashboard() {
         e.preventDefault();
         try {
             const method = editingProduct ? 'PUT' : 'POST';
-            const url = editingProduct 
+            const url = editingProduct
                 ? `/api/vendor/products/${editingProduct.id}`
                 : '/api/vendor/products';
 
@@ -169,7 +169,7 @@ export default function VendorDashboard() {
     };
 
     if (!user) {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+        return <div className="min-h-screen flex items-center justify-center text-gray-900 dark:text-white">Loading...</div>;
     }
 
     const totalSales = products.reduce((sum, p) => sum + p.price, 0);
@@ -377,11 +377,10 @@ export default function VendorDashboard() {
                                             <div className="text-right ml-4">
                                                 <p className="font-bold text-blue-600">TZS {product.price.toLocaleString()}</p>
                                                 <p className="text-xs text-orange-600 font-medium mt-1">Cashback: {product.cashback || 0}%</p>
-                                                <span className={`inline-block px-2 py-1 rounded text-xs font-medium mt-1 ${
-                                                    product.inStock
+                                                <span className={`inline-block px-2 py-1 rounded text-xs font-medium mt-1 ${product.inStock
                                                         ? 'bg-green-100 text-green-700'
                                                         : 'bg-red-100 text-red-700'
-                                                }`}>
+                                                    }`}>
                                                     {product.inStock ? 'In Stock' : 'Out'}
                                                 </span>
                                             </div>

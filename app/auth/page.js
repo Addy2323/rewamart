@@ -89,27 +89,27 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                         <span className="text-white font-bold text-2xl">R</span>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900">RewaMart</h1>
-                    <p className="text-gray-600 text-sm mt-2">Shop • Earn • Invest</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">RewaMart</h1>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">Shop • Earn • Invest</p>
                 </div>
 
                 {/* Auth Card */}
-                <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6">
                     {/* Tabs */}
-                    <div className="flex space-x-4 border-b border-gray-200">
+                    <div className="flex space-x-4 border-b border-gray-200 dark:border-gray-700">
                         <button
                             onClick={() => setIsLogin(true)}
                             className={`pb-3 font-medium transition-colors ${
                                 isLogin
-                                    ? 'text-emerald-600 border-b-2 border-emerald-600'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                             }`}
                         >
                             Login
@@ -118,8 +118,8 @@ export default function AuthPage() {
                             onClick={() => setIsLogin(false)}
                             className={`pb-3 font-medium transition-colors ${
                                 !isLogin
-                                    ? 'text-emerald-600 border-b-2 border-emerald-600'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                             }`}
                         >
                             Register
@@ -130,7 +130,7 @@ export default function AuthPage() {
                     {isLogin ? (
                         <form onSubmit={handleLogin} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
                                     <input
@@ -138,17 +138,17 @@ export default function AuthPage() {
                                         value={loginForm.email}
                                         onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                                         placeholder="Enter your email"
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 ${
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
                                             loginForm.email
-                                                ? 'border-emerald-500 bg-emerald-50 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 bg-white focus:ring-2 focus:ring-emerald-500'
+                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
                                         }`}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
                                     <input
@@ -156,16 +156,16 @@ export default function AuthPage() {
                                         value={loginForm.password}
                                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                                         placeholder="Enter your password"
-                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 ${
+                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
                                             loginForm.password
-                                                ? 'border-emerald-500 bg-emerald-50 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 bg-white focus:ring-2 focus:ring-emerald-500'
+                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
                                         }`}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -180,7 +180,7 @@ export default function AuthPage() {
                                 {loading ? 'Logging in...' : 'Login'}
                             </button>
 
-                            <p className="text-center text-sm text-gray-600">
+                            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                                 Demo: admin@rewamart.com / admin123
                             </p>
                         </form>
@@ -188,7 +188,7 @@ export default function AuthPage() {
                         /* Register Form */
                         <form onSubmit={handleRegister} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-3 text-gray-400" size={20} />
                                     <input
@@ -196,17 +196,17 @@ export default function AuthPage() {
                                         value={registerForm.name}
                                         onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
                                         placeholder="Enter your name"
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 ${
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
                                             registerForm.name
-                                                ? 'border-emerald-500 bg-emerald-50 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 bg-white focus:ring-2 focus:ring-emerald-500'
+                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
                                         }`}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
                                     <input
@@ -214,24 +214,24 @@ export default function AuthPage() {
                                         value={registerForm.email}
                                         onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                                         placeholder="Enter your email"
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 ${
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
                                             registerForm.email
-                                                ? 'border-emerald-500 bg-emerald-50 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 bg-white focus:ring-2 focus:ring-emerald-500'
+                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
                                         }`}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Account Type</label>
                                 <select
                                     value={registerForm.role}
                                     onChange={(e) => setRegisterForm({ ...registerForm, role: e.target.value })}
-                                    className={`w-full px-4 py-2 border rounded-lg outline-none transition-all text-gray-900 ${
+                                    className={`w-full px-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
                                         registerForm.role
-                                            ? 'border-emerald-500 bg-emerald-50 focus:ring-2 focus:ring-emerald-500'
-                                            : 'border-gray-300 bg-white focus:ring-2 focus:ring-emerald-500'
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
                                     }`}
                                 >
                                     <option value="customer">Customer</option>
@@ -240,7 +240,7 @@ export default function AuthPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
                                     <input
@@ -248,16 +248,16 @@ export default function AuthPage() {
                                         value={registerForm.password}
                                         onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                                         placeholder="At least 6 characters"
-                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 ${
+                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
                                             registerForm.password
-                                                ? 'border-emerald-500 bg-emerald-50 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 bg-white focus:ring-2 focus:ring-emerald-500'
+                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
                                         }`}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -265,7 +265,7 @@ export default function AuthPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Confirm Password</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
                                     <input
@@ -273,10 +273,10 @@ export default function AuthPage() {
                                         value={registerForm.confirmPassword}
                                         onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
                                         placeholder="Confirm password"
-                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 ${
+                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
                                             registerForm.confirmPassword
-                                                ? 'border-emerald-500 bg-emerald-50 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 bg-white focus:ring-2 focus:ring-emerald-500'
+                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
                                         }`}
                                     />
                                 </div>
@@ -293,10 +293,10 @@ export default function AuthPage() {
                     )}
 
                     {/* Guest Access */}
-                    <div className="pt-4 border-t border-gray-200">
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                         <Link
                             href="/shop"
-                            className="block text-center text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                            className="block text-center text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
                         >
                             Continue as Guest
                         </Link>

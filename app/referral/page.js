@@ -37,7 +37,7 @@ export default function ReferralPage() {
         }
     };
 
-    if (!data) return <div className="p-8 text-center">Loading...</div>;
+    if (!data) return <div className="p-8 text-center text-gray-900 dark:text-white">Loading...</div>;
 
     return (
         <div className="p-4 pb-24 space-y-6 animate-fade-in">

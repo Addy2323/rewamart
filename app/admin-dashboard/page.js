@@ -35,7 +35,7 @@ export default function AdminDashboard() {
     };
 
     if (!user) {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+        return <div className="min-h-screen flex items-center justify-center text-gray-900 dark:text-white">Loading...</div>;
     }
 
     const totalRevenue = products.reduce((sum, p) => sum + p.price, 0);
