@@ -1,18 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ShoppingCart, X, Filter, Star } from 'lucide-react';
+import { Search, ShoppingCart, X, Filter, Star, MapPin, Scan, Smartphone, CreditCard, Truck, Bus, Lightbulb, Phone, Sparkles } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import ProductCard from '../../components/ProductCard';
 import Modal from '../../components/Modal';
 import Toast from '../../components/Toast';
 import QRCodeModal from '../../components/QRCodeModal';
+import ScanPayModal from '../../components/ScanPayModal';
 import VendorUpdates from '../../components/VendorUpdates';
 import { getAllProducts } from '../../lib/products';
 import { addFunds, toggleAutoInvest, getWallet, processPurchase } from '../../lib/wallet';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { getProductReviews, addReview } from '../../lib/reviews';
 import { processReferralReward, processReferralPurchase } from '../../lib/referrals';
+
+// Dynamic import for LocationPicker (client-side only due to Leaflet)
+const LocationPicker = dynamic(() => import('../../components/LocationPicker'), {
+    ssr: false,
+    loading: () => <div className="h-10 bg-gray-200 animate-pulse rounded-lg"></div>
+});
 
 export default function ShopPage() {
     const [activeCategory, setActiveCategory] = useState('all');
@@ -32,6 +40,64 @@ export default function ShopPage() {
     const [randomProducts, setRandomProducts] = useState([]);
     const [user, setUser] = useState(null);
     const [referralDiscount, setReferralDiscount] = useState(0);
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [deliveryTransport, setDeliveryTransport] = useState('');
+    const [deliveryAddress, setDeliveryAddress] = useState('');
+    const [deliveryLocation, setDeliveryLocation] = useState(null);
+    const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+    const [deliveryDistance, setDeliveryDistance] = useState(null);
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [isScanPayOpen, setIsScanPayOpen] = useState(false);
+
+    // Shop location (Kariakoo, Dar es Salaam)
+    const SHOP_LOCATION = {
+        lat: -6.8160,
+        lng: 39.2803,
+        name: 'Kariakoo'
+    };
+
+    // Payment methods available
+    const paymentMethods = [
+        { id: 'mpesa', name: 'M-Pesa', icon: 'smartphone', color: 'bg-green-500' },
+        { id: 'airtel', name: 'Airtel Money', icon: 'smartphone', color: 'bg-red-500' },
+        { id: 'tigopesa', name: 'Tigo Pesa', icon: 'credit-card', color: 'bg-blue-500' },
+        { id: 'cash', name: 'Cash on Delivery', icon: 'banknote', color: 'bg-yellow-500' }
+    ];
+
+    // Delivery transport options with base price and per-km rate
+    const deliveryOptions = [
+        {
+            id: 'bolt',
+            name: 'Bolt',
+            icon: 'truck',
+            basePrice: 2000,
+            pricePerKm: 500,
+            time: '30-45 min',
+            speedKmh: 30,
+            maxDistance: 50 // Limited to 50km
+        },
+        {
+            id: 'uber',
+            name: 'Uber',
+            icon: 'truck',
+            basePrice: 2500,
+            pricePerKm: 600,
+            time: '25-40 min',
+            speedKmh: 35,
+            maxDistance: 50 // Limited to 50km
+        },
+        {
+            id: 'bus',
+            name: 'Bus Delivery',
+            icon: 'bus',
+            basePrice: 12000,
+            pricePerKm: 0,
+            time: '1 day',
+            speedKmh: 60,
+            fixedPrice: true,
+            maxDistance: null // Unlimited within Tanzania
+        }
+    ];
 
     useEffect(() => {
         // Load products with dynamic cashback
@@ -86,6 +152,21 @@ export default function ShopPage() {
         }
     }, [cart]);
 
+    // Calculate distance when location is selected
+    useEffect(() => {
+        if (deliveryLocation) {
+            const distance = calculateDistance(
+                SHOP_LOCATION.lat,
+                SHOP_LOCATION.lng,
+                deliveryLocation.lat,
+                deliveryLocation.lng
+            );
+            setDeliveryDistance(distance);
+        } else {
+            setDeliveryDistance(null);
+        }
+    }, [deliveryLocation]);
+
     const fetchRecommendedProducts = async (userId) => {
         try {
             const response = await fetch(`/api/products/recommended?userId=${userId}`);
@@ -116,6 +197,52 @@ export default function ShopPage() {
         }
     };
 
+    // Calculate distance between two coordinates using Haversine formula
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; // Earth's radius in kilometers
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+        return distance; // Distance in kilometers
+    };
+
+    // Calculate delivery price based on distance
+    const calculateDeliveryPrice = (option, distance) => {
+        if (option.fixedPrice) return option.basePrice;
+        if (!distance) return option.basePrice;
+        const price = option.basePrice + (distance * option.pricePerKm);
+        return Math.round(price / 500) * 500; // Round to nearest 500
+    };
+
+    // Calculate estimated delivery time based on distance
+    const calculateDeliveryTime = (option, distance) => {
+        if (option.fixedPrice) return option.time;
+        if (!distance) return option.time;
+        const timeInMinutes = Math.round((distance / option.speedKmh) * 60);
+        if (timeInMinutes < 60) {
+            return `${timeInMinutes}-${timeInMinutes + 15} min`;
+        } else {
+            const hours = Math.floor(timeInMinutes / 60);
+            const mins = timeInMinutes % 60;
+            return `${hours}h ${mins}min`;
+        }
+    };
+
+    // Get delivery options with calculated prices
+    const getDeliveryOptionsWithPrices = () => {
+        return deliveryOptions.map(option => ({
+            ...option,
+            price: calculateDeliveryPrice(option, deliveryDistance),
+            estimatedTime: calculateDeliveryTime(option, deliveryDistance),
+            isAvailable: !option.maxDistance || !deliveryDistance || deliveryDistance <= option.maxDistance
+        }));
+    };
+
     const addToCart = (product) => {
         const newCart = [...cart, { ...product, cartId: Date.now() }];
         setCart(newCart);
@@ -130,10 +257,44 @@ export default function ShopPage() {
     };
 
     const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
-    const finalTotal = cartTotal - referralDiscount;
+    const deliveryOptionsWithPrices = getDeliveryOptionsWithPrices();
+    const selectedDelivery = deliveryOptionsWithPrices.find(d => d.id === deliveryTransport);
+    const deliveryCost = selectedDelivery?.price || 0;
+    const finalTotal = cartTotal - referralDiscount + deliveryCost;
     const potentialCashback = cart.reduce((sum, item) => sum + (item.price * item.cashback), 0);
 
     const handleCheckout = async () => {
+        // Validate payment method selection
+        if (!paymentMethod) {
+            setToast({ type: 'error', message: 'Please select a payment method' });
+            return;
+        }
+
+        // Validate delivery transport selection
+        if (!deliveryTransport) {
+            setToast({ type: 'error', message: 'Please select a delivery transport option' });
+            return;
+        }
+
+        // Validate delivery address (either from map or typed)
+        if (!deliveryLocation && !deliveryAddress.trim()) {
+            setToast({ type: 'error', message: 'Please select a location on map or enter your delivery address' });
+            return;
+        }
+
+        // Validate phone number
+        if (!phoneNumber.trim()) {
+            setToast({ type: 'error', message: 'Please enter your phone number' });
+            return;
+        }
+
+        // Validate Tanzanian phone format (0XXXXXXXXX or +255XXXXXXXXX)
+        const phoneRegex = /^(?:\+255|0)[67]\d{8}$/;
+        if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
+            setToast({ type: 'error', message: 'Please enter a valid Tanzanian phone number (e.g., 0712345678 or +255712345678)' });
+            return;
+        }
+
         setIsCheckingOut(true);
 
         // Simulate processing
@@ -156,21 +317,43 @@ export default function ShopPage() {
             referralMessage = ` Plus TZS ${referralResult.inviteeBonus.toLocaleString()} referral bonus added to your wallet!`;
         }
 
-        // Clear cart
+        // Clear cart and selections
         setCart([]);
         storage.set(STORAGE_KEYS.CART, []);
         setIsCheckingOut(false);
         setIsCartOpen(false);
         setReferralDiscount(0);
+        setPaymentMethod('');
+        setDeliveryTransport('');
+        setDeliveryAddress('');
+        setDeliveryLocation(null);
+        setDeliveryDistance(null);
+        setPhoneNumber('');
+
+        // Get selected payment and delivery names for message
+        const paymentName = paymentMethods.find(p => p.id === paymentMethod)?.name;
+        const deliveryName = selectedDelivery?.name;
+        const distanceInfo = deliveryDistance ? ` (${deliveryDistance.toFixed(1)}km from ${SHOP_LOCATION.name})` : '';
 
         // Construct success message
-        let message = `Purchase successful! Earned TZS ${result.cashbackEarned.toLocaleString()} cashback.`;
+        let message = `Purchase successful via ${paymentName}! Delivery by ${deliveryName}${distanceInfo}. Earned TZS ${result.cashbackEarned.toLocaleString()} cashback.`;
         if (result.investedAmount > 0) {
             message += ` Auto-invested TZS ${result.investedAmount.toLocaleString()}.`;
         }
         message += referralMessage;
 
         setToast({ type: 'success', message });
+    };
+
+    const handleScanPayment = async (product) => {
+        // Process immediate purchase
+        const cashbackAmount = product.price * (product.cashbackRate / 100);
+        const result = processPurchase(product.price, cashbackAmount);
+
+        setToast({
+            type: 'success',
+            message: `Payment successful for ${product.name}! Earned TZS ${result.cashbackEarned.toLocaleString()} cashback.`
+        });
     };
 
     const categories = [
@@ -181,21 +364,43 @@ export default function ShopPage() {
         { id: 'beauty', label: 'Beauty' }
     ];
 
+    // Helper function to render icons
+    const renderIcon = (iconName, size = 20, className = '') => {
+        const iconProps = { size, className };
+        switch(iconName) {
+            case 'smartphone': return <Smartphone {...iconProps} />;
+            case 'credit-card': return <CreditCard {...iconProps} />;
+            case 'banknote': return <CreditCard {...iconProps} />;
+            case 'truck': return <Truck {...iconProps} />;
+            case 'bus': return <Bus {...iconProps} />;
+            default: return null;
+        }
+    };
+
     return (
         <div className="pb-24 dark:bg-gray-900 transition-colors">
             {/* Header */}
             <div className="bg-white dark:bg-gray-800 z-40 pb-2 shadow-sm">
                 <div className="p-4 space-y-4">
                     {/* Search */}
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Search products, brands..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all dark:text-white dark:placeholder-gray-400"
-                        />
+                    <div className="flex space-x-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Search products, brands..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all dark:text-white dark:placeholder-gray-400"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setIsScanPayOpen(true)}
+                            className="bg-gray-900 dark:bg-gray-700 text-white p-3 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors shadow-sm"
+                            title="Scan to Pay"
+                        >
+                            <Scan size={24} />
+                        </button>
                     </div>
 
                     {/* Categories */}
@@ -260,7 +465,7 @@ export default function ShopPage() {
             {user && recommendedProducts.length > 0 && (
                 <div className="p-4 space-y-4">
                     <div className="flex items-center space-x-2">
-                        <span className="text-2xl">✨</span>
+                        <Sparkles size={28} className="text-yellow-500" />
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Recommended For You</h2>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -366,10 +571,173 @@ export default function ShopPage() {
                             ))}
                         </div>
 
+                        {/* Payment Method Selection */}
+                        <div className="border-t pt-4">
+                            <h3 className="font-bold text-gray-900 dark:text-white mb-3">Payment Method</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                                {paymentMethods.map(method => (
+                                    <button
+                                        key={method.id}
+                                        onClick={() => setPaymentMethod(method.id)}
+                                        className={`flex items-center space-x-2 p-3 rounded-lg border-2 transition-all ${paymentMethod === method.id
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
+                                            : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300'
+                                            }`}
+                                    >
+                                        <div className="text-gray-700 dark:text-gray-300">
+                                            {renderIcon(method.icon, 20)}
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{method.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Delivery Transport Selection */}
+                        <div className="border-t pt-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-bold text-gray-900 dark:text-white">Delivery Transport</h3>
+                                {deliveryDistance && (
+                                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full font-medium flex items-center space-x-1">
+                                        <MapPin size={12} />
+                                        <span>{deliveryDistance.toFixed(1)} km from {SHOP_LOCATION.name}</span>
+                                    </span>
+                                )}
+                            </div>
+                            {!deliveryLocation && !deliveryAddress && (
+                                <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg flex items-start space-x-2">
+                                    <Lightbulb size={16} className="text-amber-700 dark:text-amber-300 flex-shrink-0 mt-0.5" />
+                                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                                        Select delivery location first to see accurate pricing
+                                    </p>
+                                </div>
+                            )}
+                            <div className="space-y-2">
+                                {deliveryOptionsWithPrices.map(option => (
+                                    <button
+                                        key={option.id}
+                                        onClick={() => setDeliveryTransport(option.id)}
+                                        disabled={!option.isAvailable}
+                                        className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all ${!option.isAvailable
+                                            ? 'opacity-50 cursor-not-allowed border-gray-100 bg-gray-50 dark:bg-gray-800 dark:border-gray-700'
+                                            : deliveryTransport === option.id
+                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
+                                                : 'border-gray-200 dark:border-gray-600 hover:border-emerald-300'
+                                            }`}
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            <div className={`text-gray-700 dark:text-gray-300 ${!option.isAvailable ? 'opacity-50' : ''}`}>
+                                                {renderIcon(option.icon, 24)}
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                    {option.name}
+                                                    {!option.isAvailable && <span className="ml-2 text-xs text-red-500 font-normal">(Too far)</span>}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {deliveryDistance ? option.estimatedTime : option.time}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="font-bold text-emerald-600 block">TZS {option.price.toLocaleString()}</span>
+                                            {deliveryDistance && (
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {option.fixedPrice ? '(Fixed Price)' : `(${option.pricePerKm}/km)`}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Delivery Address */}
+                        <div className="border-t pt-4">
+                            <div className="flex items-center space-x-2 mb-3">
+                                <MapPin size={20} className="text-emerald-600" />
+                                <h3 className="font-bold text-gray-900 dark:text-white">Delivery Location</h3>
+                            </div>
+                            <div className="space-y-3">
+                                {/* Map Picker Button */}
+                                <button
+                                    onClick={() => setIsLocationPickerOpen(true)}
+                                    className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        <MapPin size={20} />
+                                        <span className="font-medium">
+                                            {deliveryLocation ? 'Change Location on Map' : 'Pick Location on Map'}
+                                        </span>
+                                    </div>
+                                    <span className="text-blue-200">→</span>
+                                </button>
+
+                                {/* Selected Location Display */}
+                                {deliveryLocation && (
+                                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 border-2 border-emerald-200 dark:border-emerald-700 rounded-xl">
+                                        <div className="flex items-start space-x-2">
+                                            <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <MapPin size={12} className="text-white" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mb-1">Selected Location</p>
+                                                <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
+                                                    {deliveryLocation.address}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Or Text Input */}
+                                <div className="relative">
+                                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                                        <span className="px-3 bg-white dark:bg-gray-800 text-xs text-gray-400">or type address</span>
+                                    </div>
+                                    <div className="border-t border-gray-200 dark:border-gray-600"></div>
+                                </div>
+
+                                <textarea
+                                    value={deliveryAddress}
+                                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                                    placeholder="Enter your full delivery address (e.g., Street name, Area, City)..."
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all dark:text-white dark:placeholder-gray-400 resize-none"
+                                    rows={2}
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Use the map for accurate location or type your address manually
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Phone Number */}
+                        <div className="border-t pt-4">
+                            <div className="flex items-center space-x-2 mb-3">
+                                <Phone size={20} className="text-emerald-600" />
+                                <h3 className="font-bold text-gray-900 dark:text-white">Contact Phone Number</h3>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="relative">
+                                    <input
+                                        type="tel"
+                                        value={phoneNumber}
+                                        onChange={(e) => setPhoneNumber(e.target.value)}
+                                        placeholder="0712345678 or +255712345678"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all dark:text-white dark:placeholder-gray-400"
+                                    />
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Enter your Tanzanian phone number for delivery coordination
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Order Summary */}
                         <div className="border-t pt-4 space-y-2">
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Subtotal</span>
-                                <span className="font-bold">TZS {cartTotal.toLocaleString()}</span>
+                                <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                                <span className="font-bold text-gray-900 dark:text-white">TZS {cartTotal.toLocaleString()}</span>
                             </div>
                             {referralDiscount > 0 && (
                                 <div className="flex justify-between text-sm text-blue-600">
@@ -377,15 +745,28 @@ export default function ShopPage() {
                                     <span className="font-bold">- TZS {referralDiscount.toLocaleString()}</span>
                                 </div>
                             )}
+                            {deliveryCost > 0 && (
+                                <div className="flex justify-between text-sm text-orange-600">
+                                    <span>Delivery ({selectedDelivery?.name})</span>
+                                    <span className="font-bold">+ TZS {deliveryCost.toLocaleString()}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-sm text-green-600">
                                 <span>Est. Cashback</span>
                                 <span className="font-bold">+ TZS {potentialCashback.toLocaleString()}</span>
                             </div>
 
+                            <div className="border-t pt-2 mt-2">
+                                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
+                                    <span>Total</span>
+                                    <span className="text-emerald-600">TZS {finalTotal.toLocaleString()}</span>
+                                </div>
+                            </div>
+
                             <button
                                 onClick={handleCheckout}
-                                disabled={isCheckingOut}
-                                className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold mt-4 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                                disabled={isCheckingOut || !paymentMethod || !deliveryTransport || (!deliveryLocation && !deliveryAddress.trim())}
+                                className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold mt-4 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {isCheckingOut ? 'Processing...' : `Checkout (TZS ${finalTotal.toLocaleString()})`}
                             </button>
@@ -557,18 +938,43 @@ export default function ShopPage() {
                 )}
             </Modal>
 
-            {/* QR Code Modal */}
-            <QRCodeModal
-                isOpen={isQROpen}
-                onClose={() => setIsQROpen(false)}
-                product={qrProduct}
+            {/* Location Picker Modal */}
+            <LocationPicker
+                isOpen={isLocationPickerOpen}
+                onClose={() => setIsLocationPickerOpen(false)}
+                onSelectLocation={(location) => {
+                    setDeliveryLocation(location);
+                    setDeliveryAddress(location.address);
+                    setIsLocationPickerOpen(false);
+                }}
+                initialLocation={deliveryLocation}
             />
 
+            {/* Toast Notification */}
             {toast && (
                 <Toast
                     message={toast.message}
                     type={toast.type}
                     onClose={() => setToast(null)}
+                />
+            )}
+
+            {/* QR Code Modal */}
+            <QRCodeModal
+                isOpen={isQROpen}
+                product={qrProduct}
+                onClose={() => setIsQROpen(false)}
+            />
+
+            {/* Scan to Pay Modal */}
+            {isScanPayOpen && (
+                <ScanPayModal
+                    isOpen={isScanPayOpen}
+                    onClose={() => setIsScanPayOpen(false)}
+                    onConfirmPayment={(product) => {
+                        handleScanPayment(product);
+                        setIsScanPayOpen(false);
+                    }}
                 />
             )}
         </div>

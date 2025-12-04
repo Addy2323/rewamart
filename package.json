@@ -10,12 +10,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.447.0",
     "next": "^14.2.0",
     "qrcode": "^1.5.4",
     "qrcode.react": "^1.0.1",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",

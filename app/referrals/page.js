@@ -68,7 +68,7 @@ export default function ReferralsPage() {
 
     // Telegram share
     const handleTelegramShare = () => {
-        const message = `Karibu RewaMart! 🎁 Tumia code yangu ${referralData.code} kupata 10% bonus!`;
+        const message = `Karibu RewaMart! Tumia code yangu ${referralData.code} kupata 10% bonus!`;
         const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/referrals?ref=' + referralData.code)}&text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
     };
@@ -112,7 +112,7 @@ export default function ReferralsPage() {
         // Apply the referral code
         storage.set(STORAGE_KEYS.APPLIED_REFERRAL_CODE, enteredCode);
         setAppliedCode(enteredCode);
-        setToast({ type: 'success', message: 'Referral code applied! Get 10% bonus on your first purchase!' });
+        setToast({ type: 'success', message: 'Referral code applied! Get 5% bonus on your first purchase!' });
         setEnteredCode('');
     };
 
@@ -155,8 +155,8 @@ export default function ReferralsPage() {
                             <li>Your friend <strong>applies the code</strong> before their first purchase</li>
                             <li>When they checkout:
                                 <ul className="ml-6 mt-1 space-y-1 list-disc list-inside">
-                                    <li>They get <strong>10% bonus</strong> added to their wallet</li>
-                                    <li>You earn <strong>5% commission</strong> on their purchase</li>
+                                    <li>They get <strong>5% - 30% bonus</strong> added to their wallet</li>
+                                    <li>You earn <strong>5% - 30% bonus</strong> on your purchase</li>
                                 </ul>
                             </li>
                         </ol>
