@@ -1,6 +1,6 @@
 'use client';
 
-import { ShoppingCart, Eye, QrCode, Star } from 'lucide-react';
+import { ShoppingCart, QrCode, Star } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { getAverageRating, getProductReviews } from '../lib/reviews';
@@ -17,83 +17,82 @@ export default function ProductCard({ product, onAddToCart, onViewDetails, onQRC
             setAvgRating(parseFloat(avg));
         }
     }, [product.id]);
-    const formatCurrency = (amount) => {
-        return `TZS ${amount.toLocaleString()}`;
-    };
 
     return (
-        <div className="card-shadow bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-emerald-100 dark:hover:border-emerald-600 transition-all">
-            <div className="relative mb-3">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow flex flex-col h-full">
+            {/* Product Image - Large */}
+            <div className="relative w-full h-56 bg-gray-100 overflow-hidden">
                 <Image
                     src={product.image}
                     alt={product.name}
-                    width={500}
-                    height={300}
-                    className="w-full h-40 object-cover rounded-lg"
+                    fill
+                    className="w-full h-full object-cover"
                 />
                 {product.cashbackRate > 0 && (
-                    <span className="absolute top-2 right-2 bg-green-500 text-white text-[10px] px-2 py-1 rounded-full font-bold">
+                    <span className="absolute top-4 right-4 bg-emerald-500 text-white text-sm px-3 py-1 rounded-full font-bold">
                         {product.cashbackRate}% Cashback
                     </span>
                 )}
             </div>
 
-            <div className="space-y-2">
-                <div className="flex items-start justify-between">
-                    <h3 className="font-bold text-sm text-gray-900 dark:text-white line-clamp-2 flex-1">{product.name}</h3>
+            {/* Content Section */}
+            <div className="p-5 flex flex-col flex-1">
+                {/* Product Name */}
+                <h3 className="text-2xl font-bold text-black mb-4 line-clamp-2">{product.name}</h3>
+
+                {/* Price Section */}
+                <div className="mb-4">
+                    <span className="text-3xl font-bold text-emerald-600">
+                        TZS {product.price.toLocaleString()}
+                    </span>
+                    {product.cashbackRate > 0 && (
+                        <div className="text-emerald-600 font-semibold text-lg mt-1">
+                            +TZS {(product.price * product.cashbackRate / 100).toLocaleString()}
+                        </div>
+                    )}
+                </div>
+
+                {/* Stock and Vendor */}
+                <div className="flex items-center justify-between mb-4 text-base">
+                    <span className={product.inStock ? 'text-emerald-600 font-semibold' : 'text-red-600 font-semibold'}>
+                        {product.inStock ? 'In Stock' : 'Out of Stock'}
+                    </span>
+                    <span className="text-gray-500 font-medium">{product.vendor}</span>
                 </div>
 
                 {/* Ratings */}
                 {reviewCount > 0 && (
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center space-x-2 mb-4">
                         <div className="flex items-center">
                             {[...Array(5)].map((_, i) => (
                                 <Star
                                     key={i}
-                                    size={12}
-                                    className={i < Math.round(avgRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 dark:text-gray-600'}
+                                    size={16}
+                                    className={i < Math.round(avgRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
                                 />
                             ))}
                         </div>
-                        <span className="text-[10px] text-gray-600 dark:text-gray-400">({reviewCount})</span>
+                        <span className="text-sm text-gray-600">({reviewCount})</span>
                     </div>
                 )}
 
-                <div className="flex items-baseline justify-between">
-                    <div>
-                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                            {formatCurrency(product.price)}
-                        </span>
-                    </div>
-                    {product.cashbackRate > 0 && (
-                        <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">
-                            +{formatCurrency(product.price * product.cashbackRate / 100)}
-                        </span>
-                    )}
-                </div>
-
-                <div className="flex items-center justify-between text-xs">
-                    <span className={product.inStock ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                        {product.inStock ? 'In Stock' : 'Out of Stock'}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400">{product.vendor}</span>
-                </div>
-
-                <div className="flex gap-2">
+                {/* Action Buttons */}
+                <div className="flex gap-3 mt-auto">
                     <button
                         onClick={() => onAddToCart(product)}
                         disabled={!product.inStock}
-                        className="flex-1 flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-medium transition-colors shadow-sm active:scale-95 transform disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold text-base transition-colors shadow-md active:scale-95 transform disabled:opacity-50"
+                        title="Add to cart"
                     >
-                        <ShoppingCart size={14} />
+                        <ShoppingCart size={20} />
                         <span>Add</span>
                     </button>
                     <button
                         onClick={() => onQRCode && onQRCode(product)}
-                        className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-colors shadow-sm active:scale-95 transform"
-                        title="Generate QR Code"
+                        className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-bold transition-colors shadow-md active:scale-95 transform"
+                        title="Scan QR Code"
                     >
-                        <QrCode size={14} />
+                        <QrCode size={20} />
                     </button>
                 </div>
             </div>

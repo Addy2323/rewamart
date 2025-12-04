@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, ShoppingBag, Wallet, Heart, Settings, User, TrendingUp } from 'lucide-react';
-import { getCurrentUser, logoutUser, getUserById, updateUserProfile } from '../../lib/auth';
+import { ShoppingBag, Wallet, Heart, Settings, User, TrendingUp, Truck, CheckCircle, Clock, AlertCircle, BarChart3, Users } from 'lucide-react';
+import { getCurrentUser, getUserById, updateUserProfile } from '../../lib/auth';
 import { getWallet } from '../../lib/wallet';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
+import { getOrdersByUser, getOrderStatusLabel, getOrderStatusColor, ORDER_STATUS } from '../../lib/orders';
 import Toast from '../../components/Toast';
 
 export default function UserDashboard() {
@@ -38,19 +39,9 @@ export default function UserDashboard() {
             setProfile(userData.profile);
         }
 
-        // Load real orders from transactions
-        const allTransactions = storage.get(STORAGE_KEYS.TRANSACTIONS, []);
-        const purchaseTransactions = allTransactions
-            .filter(t => t.type === 'purchase')
-            .map(t => ({
-                id: t.id,
-                date: new Date(t.date).toLocaleDateString(),
-                items: t.items || 1, // Fallback if items count not stored
-                total: t.amount,
-                status: 'Completed'
-            }));
-
-        setOrders(purchaseTransactions);
+        // Load orders from new order system
+        const userOrders = getOrdersByUser(currentUser.id);
+        setOrders(userOrders);
 
         // Fetch recommended products
         const fetchRecommendedProducts = async () => {
@@ -66,7 +57,9 @@ export default function UserDashboard() {
         fetchRecommendedProducts();
     }, [router]);
 
+
     const handleLogout = () => {
+        const { logoutUser } = require('../../lib/auth');
         logoutUser();
         setToast({ type: 'success', message: 'Logged out successfully' });
         setTimeout(() => router.push('/auth'), 1000);
@@ -87,7 +80,7 @@ export default function UserDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             {/* Header */}
             <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 sticky top-0 z-50 shadow-md">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -101,7 +94,6 @@ export default function UserDashboard() {
                         onClick={handleLogout}
                         className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
                     >
-                        <LogOut size={18} />
                         <span>Logout</span>
                     </button>
                 </div>
@@ -272,22 +264,90 @@ export default function UserDashboard() {
                     <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
                         <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Orders</h3>
                         {orders.length > 0 ? (
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {orders.map(order => (
-                                    <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                                        <div className="flex items-center justify-between">
+                                    <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all">
+                                        {/* Order Header */}
+                                        <div className="flex items-start justify-between mb-3">
                                             <div>
-                                                <p className="font-bold text-gray-900">{order.id}</p>
-                                                <p className="text-sm text-gray-600">{order.date}</p>
+                                                <h4 className="font-bold text-gray-900">Order #{order.id.slice(-8).toUpperCase()}</h4>
+                                                <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-bold text-emerald-600">TZS {order.total.toLocaleString()}</p>
-                                                <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium mt-1">
-                                                    {order.status}
+                                                <p className="text-lg font-bold text-emerald-600 mb-1">
+                                                    TZS {order.totalAmount?.toLocaleString()}
+                                                </p>
+                                                <span className={`text-xs px-3 py-1 rounded-full font-medium inline-block ${getOrderStatusColor(order.status)}`}>
+                                                    {getOrderStatusLabel(order.status)}
                                                 </span>
                                             </div>
                                         </div>
-                                        <p className="text-sm text-gray-600 mt-2">{order.items} items</p>
+
+                                        {/* Product Info */}
+                                        <div className="flex items-center space-x-3 mb-3 pb-3 border-b border-gray-100">
+                                            <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                                <img src={order.product.image} alt={order.product.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-gray-900 text-sm truncate">{order.product.name}</p>
+                                                <p className="text-xs text-gray-500">{order.product.vendor}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Order Status Progress */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-gray-600">Delivery Progress</span>
+                                                <span className="text-gray-500">Est. {new Date(order.estimatedDelivery).toLocaleDateString()}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                {/* Status Timeline */}
+                                                <div className="flex-1 flex items-center space-x-1">
+                                                    {/* Pending */}
+                                                    <div className="flex flex-col items-center flex-1">
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${order.status === ORDER_STATUS.PENDING || order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED || order.status === ORDER_STATUS.DELIVERED ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                                            {order.status === ORDER_STATUS.PENDING || order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED || order.status === ORDER_STATUS.DELIVERED ? '✓' : '1'}
+                                                        </div>
+                                                        <span className="text-xs text-gray-600 mt-1">Pending</span>
+                                                    </div>
+
+                                                    {/* Processing */}
+                                                    <div className={`flex-1 h-1 ${order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED || order.status === ORDER_STATUS.DELIVERED ? 'bg-emerald-600' : 'bg-gray-200'}`}></div>
+                                                    <div className="flex flex-col items-center flex-1">
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED || order.status === ORDER_STATUS.DELIVERED ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                                            {order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED || order.status === ORDER_STATUS.DELIVERED ? '✓' : '2'}
+                                                        </div>
+                                                        <span className="text-xs text-gray-600 mt-1">Processing</span>
+                                                    </div>
+
+                                                    {/* Shipped */}
+                                                    <div className={`flex-1 h-1 ${order.status === ORDER_STATUS.SHIPPED || order.status === ORDER_STATUS.DELIVERED ? 'bg-emerald-600' : 'bg-gray-200'}`}></div>
+                                                    <div className="flex flex-col items-center flex-1">
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${order.status === ORDER_STATUS.SHIPPED || order.status === ORDER_STATUS.DELIVERED ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                                            {order.status === ORDER_STATUS.SHIPPED || order.status === ORDER_STATUS.DELIVERED ? '✓' : '3'}
+                                                        </div>
+                                                        <span className="text-xs text-gray-600 mt-1">Shipped</span>
+                                                    </div>
+
+                                                    {/* Delivered */}
+                                                    <div className={`flex-1 h-1 ${order.status === ORDER_STATUS.DELIVERED ? 'bg-emerald-600' : 'bg-gray-200'}`}></div>
+                                                    <div className="flex flex-col items-center flex-1">
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${order.status === ORDER_STATUS.DELIVERED ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                                            {order.status === ORDER_STATUS.DELIVERED ? '✓' : '4'}
+                                                        </div>
+                                                        <span className="text-xs text-gray-600 mt-1">Delivered</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Cashback Info */}
+                                        {order.cashbackEarned > 0 && (
+                                            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                                                <span className="text-xs text-gray-600">Cashback Earned</span>
+                                                <span className="text-sm font-bold text-green-600">+ TZS {order.cashbackEarned.toLocaleString()}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -304,32 +364,49 @@ export default function UserDashboard() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Link
                         href="/shop"
-                        className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center"
+                        className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center group"
                     >
-                        <ShoppingBag className="text-emerald-600 mx-auto mb-3" size={32} />
-                        <h3 className="font-bold text-gray-900">Continue Shopping</h3>
-                        <p className="text-sm text-gray-600 mt-1">Browse our products</p>
+                        <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                            <ShoppingBag className="text-emerald-600 dark:text-emerald-400" size={28} />
+                        </div>
+                        <h3 className="font-bold text-gray-900 dark:text-white">Continue Shopping</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Browse our products</p>
                     </Link>
 
                     <Link
                         href="/wallet"
-                        className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center"
+                        className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center group"
                     >
-                        <Wallet className="text-blue-600 mx-auto mb-3" size={32} />
-                        <h3 className="font-bold text-gray-900">Manage Wallet</h3>
-                        <p className="text-sm text-gray-600 mt-1">View transactions</p>
+                        <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                            <Wallet className="text-blue-600 dark:text-blue-400" size={28} />
+                        </div>
+                        <h3 className="font-bold text-gray-900 dark:text-white">Manage Wallet</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">View transactions</p>
                     </Link>
 
                     <Link
                         href="/invest"
-                        className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center"
+                        className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center group"
                     >
-                        <TrendingUp className="text-purple-600 mx-auto mb-3" size={32} />
-                        <h3 className="font-bold text-gray-900">Investments</h3>
-                        <p className="text-sm text-gray-600 mt-1">Grow your wealth</p>
+                        <div className="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                            <TrendingUp className="text-purple-600 dark:text-purple-400" size={28} />
+                        </div>
+                        <h3 className="font-bold text-gray-900 dark:text-white">Investments</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Grow your wealth</p>
+                    </Link>
+
+                    <Link
+                        href="/referral"
+                        className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center group"
+                    >
+                        <div className="w-14 h-14 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                            <Heart className="text-orange-600 dark:text-orange-400" size={28} />
+                        </div>
+                        <h3 className="font-bold text-gray-900 dark:text-white">Referrals</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Invite friends & earn</p>
                     </Link>
                 </div>
             </div>

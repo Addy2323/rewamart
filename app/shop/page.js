@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, ShoppingCart, X, Filter, Star, MapPin, Scan, Smartphone, CreditCard, Truck, Bus, Lightbulb, Phone, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -12,6 +13,7 @@ import ScanPayModal from '../../components/ScanPayModal';
 import VendorUpdates from '../../components/VendorUpdates';
 import { getAllProducts } from '../../lib/products';
 import { addFunds, toggleAutoInvest, getWallet, processPurchase } from '../../lib/wallet';
+import { createOrder } from '../../lib/orders';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { getProductReviews, addReview } from '../../lib/reviews';
 import { processReferralReward, processReferralPurchase } from '../../lib/referrals';
@@ -23,6 +25,7 @@ const LocationPicker = dynamic(() => import('../../components/LocationPicker'), 
 });
 
 export default function ShopPage() {
+    const router = useRouter();
     const [activeCategory, setActiveCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [products, setProducts] = useState([]);
@@ -303,6 +306,17 @@ export default function ShopPage() {
         // Process purchase (Cashback + Auto-Invest)
         const result = processPurchase(finalTotal, potentialCashback);
 
+        // Create orders for each cart item
+        cart.forEach(product => {
+            createOrder(product, paymentMethod, {
+                address: deliveryAddress,
+                phone: phoneNumber,
+                location: deliveryLocation,
+                distance: deliveryDistance,
+                transport: deliveryTransport
+            });
+        });
+
         let referralMessage = '';
 
         // If a referral code was used, process the complete referral flow
@@ -336,23 +350,29 @@ export default function ShopPage() {
         const distanceInfo = deliveryDistance ? ` (${deliveryDistance.toFixed(1)}km from ${SHOP_LOCATION.name})` : '';
 
         // Construct success message
-        let message = `Purchase successful via ${paymentName}! Delivery by ${deliveryName}${distanceInfo}. Earned TZS ${result.cashbackEarned.toLocaleString()} cashback.`;
+        let message = `Purchase successful! ${cart.length} order(s) created. Redirecting to dashboard...`;
         if (result.investedAmount > 0) {
             message += ` Auto-invested TZS ${result.investedAmount.toLocaleString()}.`;
         }
         message += referralMessage;
 
         setToast({ type: 'success', message });
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+            router.push('/user-dashboard');
+        }, 2000);
     };
 
     const handleScanPayment = async (product) => {
-        // Process immediate purchase
-        const cashbackAmount = product.price * (product.cashbackRate / 100);
-        const result = processPurchase(product.price, cashbackAmount);
+        // Add product to cart instead of direct purchase
+        const newCart = [...cart, { ...product, cartId: Date.now() }];
+        setCart(newCart);
+        storage.set(STORAGE_KEYS.CART, newCart);
 
         setToast({
             type: 'success',
-            message: `Payment successful for ${product.name}! Earned TZS ${result.cashbackEarned.toLocaleString()} cashback.`
+            message: `${product.name} added to cart! Proceed to checkout to complete your purchase.`
         });
     };
 
@@ -425,7 +445,7 @@ export default function ShopPage() {
             <VendorUpdates />
 
             {/* Product Grid */}
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-0">
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-0">
                 {products.map(product => (
                     <ProductCard
                         key={product.id}

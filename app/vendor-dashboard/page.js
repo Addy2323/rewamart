@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, Package, TrendingUp, Users, Settings, Store, BarChart3, Plus, Edit2, Trash2, Search } from 'lucide-react';
-import { getCurrentUser, logoutUser, getUserById, updateUserProfile } from '../../lib/auth';
+import { Package, TrendingUp, Users, Settings, Store, BarChart3, Plus, Edit2, Trash2, Search } from 'lucide-react';
+import { getCurrentUser, getUserById, updateUserProfile } from '../../lib/auth';
 import Toast from '../../components/Toast';
 import Modal from '../../components/Modal';
+import { storage, STORAGE_KEYS } from '../../lib/storage';
 
 export default function VendorDashboard() {
     const router = useRouter();
@@ -59,21 +60,16 @@ export default function VendorDashboard() {
         setFilteredProducts(filtered);
     }, [searchQuery, products]);
 
-    const fetchVendorProducts = async () => {
+    const fetchVendorProducts = () => {
         try {
-            const response = await fetch('/api/vendor/products');
-            const data = await response.json();
-            setProducts(data.products || []);
+            // Load vendor products from localStorage
+            const vendorProducts = storage.get(STORAGE_KEYS.VENDOR_PRODUCTS, []);
+            setProducts(vendorProducts);
         } catch (error) {
             console.error('Error fetching products:', error);
         }
     };
 
-    const handleLogout = () => {
-        logoutUser();
-        setToast({ type: 'success', message: 'Logged out successfully' });
-        setTimeout(() => router.push('/auth'), 1000);
-    };
 
     const handleUpdateProfile = () => {
         const result = updateUserProfile(user.id, profile);
@@ -121,27 +117,44 @@ export default function VendorDashboard() {
     const handleSaveProduct = async (e) => {
         e.preventDefault();
         try {
-            const method = editingProduct ? 'PUT' : 'POST';
-            const url = editingProduct
-                ? `/api/vendor/products/${editingProduct.id}`
-                : '/api/vendor/products';
+            // Get existing vendor products from storage
+            const vendorProducts = storage.get(STORAGE_KEYS.VENDOR_PRODUCTS, []);
 
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-            });
-
-            if (response.ok) {
-                setToast({
-                    type: 'success',
-                    message: editingProduct ? 'Product updated' : 'Product added',
-                });
-                handleCloseProductModal();
-                fetchVendorProducts();
+            if (editingProduct) {
+                // Update existing product
+                const index = vendorProducts.findIndex(p => p.id === editingProduct.id);
+                if (index !== -1) {
+                    vendorProducts[index] = {
+                        ...vendorProducts[index],
+                        ...formData,
+                        price: Number(formData.price),
+                        cashback: Number(formData.cashback) || 0,
+                        cashbackRate: Number(formData.cashback) || 0,
+                    };
+                }
             } else {
-                setToast({ type: 'error', message: 'Failed to save product' });
+                // Add new product
+                const newProduct = {
+                    id: 'vendor_' + Date.now(),
+                    ...formData,
+                    price: Number(formData.price),
+                    cashback: Number(formData.cashback) || 0,
+                    cashbackRate: Number(formData.cashback) || 0,
+                    inStock: formData.inStock !== false,
+                    rating: Number(formData.rating) || 4.5,
+                };
+                vendorProducts.push(newProduct);
             }
+
+            // Save to localStorage
+            storage.set(STORAGE_KEYS.VENDOR_PRODUCTS, vendorProducts);
+
+            setToast({
+                type: 'success',
+                message: editingProduct ? 'Product updated' : 'Product added',
+            });
+            handleCloseProductModal();
+            fetchVendorProducts();
         } catch (error) {
             console.error('Error saving product:', error);
             setToast({ type: 'error', message: 'Failed to save product' });
@@ -152,16 +165,17 @@ export default function VendorDashboard() {
         if (!confirm('Delete this product?')) return;
 
         try {
-            const response = await fetch(`/api/vendor/products/${id}`, {
-                method: 'DELETE',
-            });
+            // Get existing vendor products from storage
+            const vendorProducts = storage.get(STORAGE_KEYS.VENDOR_PRODUCTS, []);
 
-            if (response.ok) {
-                setToast({ type: 'success', message: 'Product deleted' });
-                fetchVendorProducts();
-            } else {
-                setToast({ type: 'error', message: 'Failed to delete product' });
-            }
+            // Filter out the product to delete
+            const updatedProducts = vendorProducts.filter(p => p.id !== id);
+
+            // Save to localStorage
+            storage.set(STORAGE_KEYS.VENDOR_PRODUCTS, updatedProducts);
+
+            setToast({ type: 'success', message: 'Product deleted' });
+            fetchVendorProducts();
         } catch (error) {
             console.error('Error deleting product:', error);
             setToast({ type: 'error', message: 'Failed to delete product' });
@@ -178,28 +192,9 @@ export default function VendorDashboard() {
     const totalCashback = products.reduce((sum, p) => sum + (p.cashback || 0), 0);
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 sticky top-0 z-50 shadow-md">
-                <div className="max-w-6xl mx-auto flex items-center justify-between">
-                    <Link href="/shop" className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 font-bold">R</span>
-                        </div>
-                        <h1 className="font-bold text-lg">RewaMart Vendor</h1>
-                    </Link>
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
-                    >
-                        <LogOut size={18} />
-                        <span>Logout</span>
-                    </button>
-                </div>
-            </header>
-
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             {/* Main Content */}
-            <div className="max-w-6xl mx-auto p-4 space-y-6 pb-20">
+            <main className="p-4 md:p-6 space-y-6 pb-20">
                 {/* Welcome Section */}
                 <div className="bg-white rounded-xl shadow-md p-6">
                     <h2 className="text-2xl font-bold text-gray-900">Welcome, {user.name}</h2>
@@ -378,8 +373,8 @@ export default function VendorDashboard() {
                                                 <p className="font-bold text-blue-600">TZS {product.price.toLocaleString()}</p>
                                                 <p className="text-xs text-orange-600 font-medium mt-1">Cashback: {product.cashback || 0}%</p>
                                                 <span className={`inline-block px-2 py-1 rounded text-xs font-medium mt-1 ${product.inStock
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-red-100 text-red-700'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-red-100 text-red-700'
                                                     }`}>
                                                     {product.inStock ? 'In Stock' : 'Out'}
                                                 </span>
@@ -413,160 +408,163 @@ export default function VendorDashboard() {
 
                 {/* Quick Actions */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center">
+                    <button
+                        onClick={() => handleOpenProductModal()}
+                        className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center cursor-pointer"
+                    >
                         <Package className="text-blue-600 mx-auto mb-3" size={32} />
                         <h3 className="font-bold text-gray-900">Add Product</h3>
                         <p className="text-sm text-gray-600 mt-1">List new products</p>
-                    </div>
+                    </button>
 
-                    <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center">
+                    <Link href="/analytics" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center">
                         <BarChart3 className="text-green-600 mx-auto mb-3" size={32} />
                         <h3 className="font-bold text-gray-900">Analytics</h3>
                         <p className="text-sm text-gray-600 mt-1">View sales reports</p>
-                    </div>
+                    </Link>
 
-                    <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center">
+                    <Link href="/customer-reviews" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center">
                         <Users className="text-purple-600 mx-auto mb-3" size={32} />
                         <h3 className="font-bold text-gray-900">Customers</h3>
                         <p className="text-sm text-gray-600 mt-1">Manage customer reviews</p>
-                    </div>
+                    </Link>
                 </div>
-            </div>
 
-            {/* Product Modal */}
-            <Modal
-                isOpen={isProductModalOpen}
-                onClose={handleCloseProductModal}
-                title={editingProduct ? 'Edit Product' : 'Add New Product'}
-            >
-                <form onSubmit={handleSaveProduct} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Enter product name"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
+                {/* Product Modal */}
+                <Modal
+                    isOpen={isProductModalOpen}
+                    onClose={handleCloseProductModal}
+                    title={editingProduct ? 'Edit Product' : 'Add New Product'}
+                >
+                    <form onSubmit={handleSaveProduct} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Price (TZS)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                             <input
-                                type="number"
-                                name="price"
-                                value={formData.price}
+                                type="text"
+                                name="name"
+                                value={formData.name}
                                 onChange={handleInputChange}
                                 required
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="0"
+                                placeholder="Enter product name"
                             />
                         </div>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Price (TZS)</label>
+                                <input
+                                    type="number"
+                                    name="price"
+                                    value={formData.price}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Cashback %</label>
+                                <input
+                                    type="number"
+                                    name="cashback"
+                                    value={formData.cashback}
+                                    onChange={handleInputChange}
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                                <input
+                                    type="number"
+                                    name="rating"
+                                    value={formData.rating}
+                                    onChange={handleInputChange}
+                                    min="0"
+                                    max="5"
+                                    step="0.1"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                            </div>
+                        </div>
+
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Cashback %</label>
-                            <input
-                                type="number"
-                                name="cashback"
-                                value={formData.cashback}
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
                                 onChange={handleInputChange}
-                                min="0"
-                                max="100"
-                                step="0.1"
+                                rows="3"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="0"
+                                placeholder="Enter product description"
                             />
                         </div>
+
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
                             <input
-                                type="number"
-                                name="rating"
-                                value={formData.rating}
+                                type="url"
+                                name="image"
+                                value={formData.image}
                                 onChange={handleInputChange}
-                                min="0"
-                                max="5"
-                                step="0.1"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="https://..."
                             />
                         </div>
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea
-                            name="description"
-                            value={formData.description}
-                            onChange={handleInputChange}
-                            rows="3"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Enter product description"
-                        />
-                    </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Vendor</label>
+                            <input
+                                type="text"
+                                name="vendor"
+                                value={formData.vendor}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="Vendor name"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                        <input
-                            type="url"
-                            name="image"
-                            value={formData.image}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="https://..."
-                        />
-                    </div>
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                name="inStock"
+                                checked={formData.inStock}
+                                onChange={handleInputChange}
+                                className="w-4 h-4 rounded"
+                            />
+                            <label className="text-sm font-medium text-gray-700">In Stock</label>
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Vendor</label>
-                        <input
-                            type="text"
-                            name="vendor"
-                            value={formData.vendor}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Vendor name"
-                        />
-                    </div>
+                        <div className="flex gap-3 pt-4">
+                            <button
+                                type="submit"
+                                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            >
+                                {editingProduct ? 'Update Product' : 'Add Product'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleCloseProductModal}
+                                className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </Modal>
 
-                    <div className="flex items-center space-x-2">
-                        <input
-                            type="checkbox"
-                            name="inStock"
-                            checked={formData.inStock}
-                            onChange={handleInputChange}
-                            className="w-4 h-4 rounded"
-                        />
-                        <label className="text-sm font-medium text-gray-700">In Stock</label>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="submit"
-                            className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                        >
-                            {editingProduct ? 'Update Product' : 'Add Product'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleCloseProductModal}
-                            className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </Modal>
-
-            {toast && (
-                <Toast
-                    message={toast.message}
-                    type={toast.type}
-                    onClose={() => setToast(null)}
-                />
-            )}
+                {toast && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
+                )}
+            </main>
         </div>
     );
 }

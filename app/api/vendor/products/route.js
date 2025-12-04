@@ -1,17 +1,18 @@
 // app/api/vendor/products/route.js
 import { NextResponse } from 'next/server';
 
-// Mock database for vendor products
-let vendorProducts = [
-    { id: 1, name: 'Samsung Galaxy S24', price: 2500000, image: 'https://images.unsplash.com/photo-1511707267537-b85faf00021e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60', vendor: 'Tech Store', description: 'Latest flagship phone', inStock: true, rating: 4.8, cashback: 5 },
-    { id: 2, name: 'MacBook Air M3', price: 3200000, image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60', vendor: 'Apple Store', description: 'Powerful laptop', inStock: false, rating: 4.9, cashback: 3 },
-];
+// Note: In a real app, this would use a database. 
+// For now, we're using localStorage via the client-side storage library.
+// The vendor dashboard saves directly to localStorage with STORAGE_KEYS.VENDOR_PRODUCTS
 
 export async function GET(request) {
     try {
+        // Return empty array - actual products are fetched from client-side storage
+        // The shop page uses getAllProducts() which combines default products with vendor products from storage
         return NextResponse.json({
-            products: vendorProducts,
-            count: vendorProducts.length,
+            products: [],
+            count: 0,
+            message: 'Vendor products are stored client-side. Use getAllProducts() from lib/products.js'
         });
     } catch (error) {
         console.error('Error fetching vendor products:', error);
@@ -33,8 +34,9 @@ export async function POST(request) {
             );
         }
 
+        // Return success - actual saving happens on client-side
         const newProduct = {
-            id: Math.max(...vendorProducts.map(p => p.id), 0) + 1,
+            id: 'vendor_' + Date.now(),
             name: body.name,
             price: Number(body.price),
             image: body.image || 'https://via.placeholder.com/500',
@@ -43,9 +45,8 @@ export async function POST(request) {
             inStock: body.inStock !== false,
             rating: Number(body.rating) || 4.5,
             cashback: Number(body.cashback) || 0,
+            cashbackRate: Number(body.cashback) || 0,
         };
-
-        vendorProducts.push(newProduct);
 
         return NextResponse.json({
             message: 'Product created successfully',
