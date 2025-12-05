@@ -59,14 +59,18 @@ export default function Sidebar({ userRole = 'user' }) {
                 }`}
             >
                 {/* Logo Section */}
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <Link href="/" className="flex items-center space-x-2">
-                        <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-lg">R</span>
+                <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-800">
+                    <Link href="/" className="flex items-center space-x-3 group">
+                        <div className="relative w-50 h-45 sm:w-16 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden shadow-md group-hover:shadow-lg transition-shadow duration-300">
+                            <img 
+                                src="/images/logo.png" 
+                                alt="RewaMart Logo" 
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                            />
                         </div>
                         <div>
-                            <h1 className="font-bold text-gray-900 dark:text-white">RewaMart</h1>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Shop • Earn • Invest</p>
+                            <h1 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white leading-tight">RewaMart</h1>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Shop • Earn • Invest</p>
                         </div>
                     </Link>
                 </div>

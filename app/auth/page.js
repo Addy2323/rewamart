@@ -93,10 +93,8 @@ export default function AuthPage() {
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <span className="text-white font-bold text-2xl">R</span>
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">RewaMart</h1>
+                    <img src="/images/logo.png" alt="RewaMart Logo" className="w-24 h-24 mx-auto mb-4 object-contain" />
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white"></h1>
                     <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">Shop • Earn • Invest</p>
                 </div>
 
@@ -106,21 +104,19 @@ export default function AuthPage() {
                     <div className="flex space-x-4 border-b border-gray-200 dark:border-gray-700">
                         <button
                             onClick={() => setIsLogin(true)}
-                            className={`pb-3 font-medium transition-colors ${
-                                isLogin
-                                    ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                            }`}
+                            className={`pb-3 font-medium transition-colors ${isLogin
+                                ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                }`}
                         >
                             Login
                         </button>
                         <button
                             onClick={() => setIsLogin(false)}
-                            className={`pb-3 font-medium transition-colors ${
-                                !isLogin
-                                    ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                            }`}
+                            className={`pb-3 font-medium transition-colors ${!isLogin
+                                ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                }`}
                         >
                             Register
                         </button>
@@ -138,11 +134,10 @@ export default function AuthPage() {
                                         value={loginForm.email}
                                         onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                                         placeholder="Enter your email"
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
-                                            loginForm.email
-                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
-                                        }`}
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${loginForm.email
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
+                                            }`}
                                     />
                                 </div>
                             </div>
@@ -156,11 +151,10 @@ export default function AuthPage() {
                                         value={loginForm.password}
                                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                                         placeholder="Enter your password"
-                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
-                                            loginForm.password
-                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
-                                        }`}
+                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${loginForm.password
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
+                                            }`}
                                     />
                                     <button
                                         type="button"
@@ -180,9 +174,7 @@ export default function AuthPage() {
                                 {loading ? 'Logging in...' : 'Login'}
                             </button>
 
-                            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                                Demo: admin@rewamart.com / admin123
-                            </p>
+
                         </form>
                     ) : (
                         /* Register Form */
@@ -196,11 +188,10 @@ export default function AuthPage() {
                                         value={registerForm.name}
                                         onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
                                         placeholder="Enter your name"
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
-                                            registerForm.name
-                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
-                                        }`}
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${registerForm.name
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
+                                            }`}
                                     />
                                 </div>
                             </div>
@@ -214,11 +205,10 @@ export default function AuthPage() {
                                         value={registerForm.email}
                                         onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                                         placeholder="Enter your email"
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
-                                            registerForm.email
-                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
-                                        }`}
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${registerForm.email
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
+                                            }`}
                                     />
                                 </div>
                             </div>
@@ -228,11 +218,10 @@ export default function AuthPage() {
                                 <select
                                     value={registerForm.role}
                                     onChange={(e) => setRegisterForm({ ...registerForm, role: e.target.value })}
-                                    className={`w-full px-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
-                                        registerForm.role
-                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
-                                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
-                                    }`}
+                                    className={`w-full px-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${registerForm.role
+                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
+                                        }`}
                                 >
                                     <option value="customer">Customer</option>
                                     <option value="vendor">Vendor</option>
@@ -248,11 +237,10 @@ export default function AuthPage() {
                                         value={registerForm.password}
                                         onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                                         placeholder="At least 6 characters"
-                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
-                                            registerForm.password
-                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
-                                        }`}
+                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${registerForm.password
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
+                                            }`}
                                     />
                                     <button
                                         type="button"
@@ -273,11 +261,10 @@ export default function AuthPage() {
                                         value={registerForm.confirmPassword}
                                         onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
                                         placeholder="Confirm password"
-                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${
-                                            registerForm.confirmPassword
-                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
-                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
-                                        }`}
+                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${registerForm.confirmPassword
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
+                                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
+                                            }`}
                                     />
                                 </div>
                             </div>

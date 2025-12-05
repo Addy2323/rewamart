@@ -84,12 +84,10 @@ export default function UserDashboard() {
             {/* Header */}
             <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 sticky top-0 z-50 shadow-md">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
-                    <Link href="/shop" className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                            <span className="text-emerald-600 font-bold">R</span>
-                        </div>
+                    {/* <Link href="/shop" className="flex items-center space-x-3">
+                        <img src="/images/logo.png" alt="RewaMart Logo" className="w-14 h-14 object-contain" />
                         <h1 className="font-bold text-lg">RewaMart</h1>
-                    </Link>
+                    </Link> */}
                     <button
                         onClick={handleLogout}
                         className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"

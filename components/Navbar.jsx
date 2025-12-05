@@ -16,7 +16,7 @@ export default function Navbar() {
         // Initial load
         const wallet = getWallet();
         setBalance(wallet.balance);
-        
+
         const currentUser = getCurrentUser();
         setUser(currentUser);
 
@@ -32,19 +32,23 @@ export default function Navbar() {
     return (
         <header className="gradient-bg text-white p-4 sticky top-0 z-50 shadow-md">
             <div className={`mx-auto flex items-center justify-between transition-all duration-300 ${pathname === '/' ? 'max-w-md md:max-w-6xl' : 'max-w-md'}`}>
-                <Link href="/" className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-                        <span className="text-emerald-600 font-bold text-lg">R</span>
+                <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group">
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0">
+                        <img 
+                            src="/images/logo.png" 
+                            alt="RewaMart Logo" 
+                            className="w-full h-full object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300" 
+                        />
                     </div>
-                    <div>
-                        <h1 className="font-bold text-lg leading-tight">RewaMart</h1>
-                        <p className="text-[10px] opacity-90 font-medium">Shop • Earn • Invest</p>
-                    </div>
+                    {/* <div className="hidden sm:block">
+                        <h1 className="font-bold text-base sm:text-lg leading-tight text-white">RewaMart</h1>
+                        <p className="text-[9px] sm:text-[10px] opacity-90 font-medium">Shop • Earn • Invest</p>
+                    </div> */}
                 </Link>
 
                 <div className="flex items-center space-x-3">
                     {user && (
-                        <Link 
+                        <Link
                             href={user.role === 'admin' ? '/admin-dashboard' : user.role === 'vendor' ? '/vendor-dashboard' : '/user-dashboard'}
                             className="text-xs bg-white/10 px-2 py-1 rounded-lg backdrop-blur-sm hover:bg-white/20 transition-colors flex items-center space-x-1"
                         >
@@ -57,11 +61,11 @@ export default function Navbar() {
                             Back to Shop
                         </Link>
                     )}
-                    {pathname !== '/admin' && !user && (
+                    {/* {pathname !== '/admin' && !user && (
                         <Link href="/admin" className="text-xs bg-white/10 px-2 py-1 rounded-lg backdrop-blur-sm hover:bg-white/20 transition-colors">
                             Admin
                         </Link>
-                    )}
+                    )} */}
                     <Link href="/wallet" className="text-right bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm hover:bg-white/20 transition-colors">
                         <p className="text-[10px] opacity-90 uppercase tracking-wider">Wallet Balance</p>
                         <p className="font-bold text-lg leading-none">TZS {balance.toLocaleString()}</p>
