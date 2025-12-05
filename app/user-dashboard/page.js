@@ -8,12 +8,15 @@ import { getCurrentUser, getUserById, updateUserProfile } from '../../lib/auth';
 import { getWallet } from '../../lib/wallet';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { getOrdersByUser, getOrderStatusLabel, getOrderStatusColor, ORDER_STATUS } from '../../lib/orders';
+import { getInvestmentStats } from '../../lib/investments';
+import { getTotalWithdrawn } from '../../lib/withdrawals';
 import Toast from '../../components/Toast';
 
 export default function UserDashboard() {
     const router = useRouter();
     const [user, setUser] = useState(null);
-    const [wallet, setWallet] = useState(null);
+    const [investmentStats, setInvestmentStats] = useState({ totalInvested: 0, totalCurrentValue: 0 });
+    const [totalWithdrawn, setTotalWithdrawn] = useState(0);
     const [orders, setOrders] = useState([]);
     const [toast, setToast] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -31,7 +34,14 @@ export default function UserDashboard() {
             return;
         }
         setUser(currentUser);
-        setWallet(getWallet());
+
+        // Load investment stats
+        const stats = getInvestmentStats(currentUser.id);
+        setInvestmentStats(stats);
+
+        // Load withdrawals
+        const withdrawn = getTotalWithdrawn(currentUser.id);
+        setTotalWithdrawn(withdrawn);
 
         // Load user profile
         const userData = getUserById(currentUser.id);
@@ -107,16 +117,42 @@ export default function UserDashboard() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {/* Wallet Balance */}
+                    {/* Total Invested */}
                     <div className="bg-white rounded-xl shadow-md p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-600 text-sm">Wallet Balance</p>
+                                <p className="text-gray-600 text-sm">Total Invested</p>
                                 <p className="text-2xl font-bold text-emerald-600 mt-2">
-                                    TZS {wallet?.balance.toLocaleString() || 0}
+                                    TZS {investmentStats.totalInvested.toLocaleString()}
                                 </p>
                             </div>
-                            <Wallet className="text-emerald-600" size={32} />
+                            <TrendingUp className="text-emerald-600" size={32} />
+                        </div>
+                    </div>
+
+                    {/* Current Value */}
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-gray-600 text-sm">Current Value</p>
+                                <p className="text-2xl font-bold text-purple-600 mt-2">
+                                    TZS {Math.round(investmentStats.totalCurrentValue).toLocaleString()}
+                                </p>
+                            </div>
+                            <Heart className="text-purple-600" size={32} />
+                        </div>
+                    </div>
+
+                    {/* Total Withdrawn */}
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-gray-600 text-sm">Total Withdrawn</p>
+                                <p className="text-2xl font-bold text-blue-600 mt-2">
+                                    TZS {totalWithdrawn.toLocaleString()}
+                                </p>
+                            </div>
+                            <Wallet className="text-blue-600" size={32} />
                         </div>
                     </div>
 
@@ -125,35 +161,9 @@ export default function UserDashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-gray-600 text-sm">Total Orders</p>
-                                <p className="text-2xl font-bold text-blue-600 mt-2">{orders.length}</p>
+                                <p className="text-2xl font-bold text-orange-600 mt-2">{orders.length}</p>
                             </div>
-                            <ShoppingBag className="text-blue-600" size={32} />
-                        </div>
-                    </div>
-
-                    {/* Cashback Earned */}
-                    <div className="bg-white rounded-xl shadow-md p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-600 text-sm">Cashback Earned</p>
-                                <p className="text-2xl font-bold text-green-600 mt-2">
-                                    TZS {(wallet?.cashbackEarned || 0).toLocaleString()}
-                                </p>
-                            </div>
-                            <TrendingUp className="text-green-600" size={32} />
-                        </div>
-                    </div>
-
-                    {/* Investments */}
-                    <div className="bg-white rounded-xl shadow-md p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-600 text-sm">Investments</p>
-                                <p className="text-2xl font-bold text-purple-600 mt-2">
-                                    TZS {(wallet?.investedAmount || 0).toLocaleString()}
-                                </p>
-                            </div>
-                            <Heart className="text-purple-600" size={32} />
+                            <ShoppingBag className="text-orange-600" size={32} />
                         </div>
                     </div>
                 </div>
@@ -374,16 +384,7 @@ export default function UserDashboard() {
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Browse our products</p>
                     </Link>
 
-                    <Link
-                        href="/wallet"
-                        className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center group"
-                    >
-                        <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                            <Wallet className="text-blue-600 dark:text-blue-400" size={28} />
-                        </div>
-                        <h3 className="font-bold text-gray-900 dark:text-white">Manage Wallet</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">View transactions</p>
-                    </Link>
+
 
                     <Link
                         href="/invest"

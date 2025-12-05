@@ -34,10 +34,10 @@ export default function Navbar() {
             <div className={`mx-auto flex items-center justify-between transition-all duration-300 ${pathname === '/' ? 'max-w-md md:max-w-6xl' : 'max-w-md'}`}>
                 <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group">
                     <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0">
-                        <img 
-                            src="/images/logo.png" 
-                            alt="RewaMart Logo" 
-                            className="w-full h-full object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300" 
+                        <img
+                            src="/images/logo.png"
+                            alt="RewaMart Logo"
+                            className="w-full h-full object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
                         />
                     </div>
                     {/* <div className="hidden sm:block">
@@ -66,10 +66,6 @@ export default function Navbar() {
                             Admin
                         </Link>
                     )} */}
-                    <Link href="/wallet" className="text-right bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm hover:bg-white/20 transition-colors">
-                        <p className="text-[10px] opacity-90 uppercase tracking-wider">Wallet Balance</p>
-                        <p className="font-bold text-lg leading-none">TZS {balance.toLocaleString()}</p>
-                    </Link>
                 </div>
             </div>
         </header>

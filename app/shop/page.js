@@ -17,6 +17,10 @@ import { createOrder } from '../../lib/orders';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { getProductReviews, addReview } from '../../lib/reviews';
 import { processReferralReward, processReferralPurchase } from '../../lib/referrals';
+import { initiateSTKPush } from '../../lib/stkpush';
+import { createInvestment } from '../../lib/investments';
+import { createWithdrawal } from '../../lib/withdrawals';
+import CashbackAllocationModal from '../../components/CashbackAllocationModal';
 
 // Dynamic import for LocationPicker (client-side only due to Leaflet)
 const LocationPicker = dynamic(() => import('../../components/LocationPicker'), {
@@ -51,6 +55,8 @@ export default function ShopPage() {
     const [deliveryDistance, setDeliveryDistance] = useState(null);
     const [phoneNumber, setPhoneNumber] = useState('');
     const [isScanPayOpen, setIsScanPayOpen] = useState(false);
+    const [isCashbackModalOpen, setIsCashbackModalOpen] = useState(false);
+    const [earnedCashback, setEarnedCashback] = useState(0);
 
     // Shop location (Kariakoo, Dar es Salaam)
     const SHOP_LOCATION = {
@@ -300,68 +306,86 @@ export default function ShopPage() {
 
         setIsCheckingOut(true);
 
-        // Simulate processing
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Initiate STK Push Payment
+        try {
+            const paymentResult = await initiateSTKPush(phoneNumber, finalTotal);
 
-        // Process purchase (Cashback + Auto-Invest)
-        const result = processPurchase(finalTotal, potentialCashback);
+            if (paymentResult.success) {
+                // Create orders for each cart item
+                cart.forEach(product => {
+                    createOrder(product, paymentMethod, {
+                        address: deliveryAddress,
+                        phone: phoneNumber,
+                        location: deliveryLocation,
+                        distance: deliveryDistance,
+                        transport: deliveryTransport
+                    });
+                });
 
-        // Create orders for each cart item
-        cart.forEach(product => {
-            createOrder(product, paymentMethod, {
-                address: deliveryAddress,
-                phone: phoneNumber,
-                location: deliveryLocation,
-                distance: deliveryDistance,
-                transport: deliveryTransport
-            });
-        });
+                let referralMessage = '';
 
-        let referralMessage = '';
+                // If a referral code was used, process the complete referral flow
+                const appliedCode = storage.get(STORAGE_KEYS.APPLIED_REFERRAL_CODE);
+                const hasMadePurchase = storage.get(STORAGE_KEYS.HAS_MADE_PURCHASE);
 
-        // If a referral code was used, process the complete referral flow
-        const appliedCode = storage.get(STORAGE_KEYS.APPLIED_REFERRAL_CODE);
-        const hasMadePurchase = storage.get(STORAGE_KEYS.HAS_MADE_PURCHASE);
+                if (appliedCode && !hasMadePurchase) {
+                    // Note: Referral bonus logic might need adjustment if wallet is removed
+                    // For now, we'll assume it's tracked separately or added to cashback
+                    const referralResult = processReferralPurchase(finalTotal, appliedCode);
+                    storage.set(STORAGE_KEYS.HAS_MADE_PURCHASE, true);
+                    storage.remove(STORAGE_KEYS.APPLIED_REFERRAL_CODE);
 
-        if (appliedCode && !hasMadePurchase) {
-            const referralResult = processReferralPurchase(finalTotal, appliedCode);
-            storage.set(STORAGE_KEYS.HAS_MADE_PURCHASE, true);
-            storage.remove(STORAGE_KEYS.APPLIED_REFERRAL_CODE);
+                    referralMessage = ` Plus referral bonus!`;
+                }
 
-            referralMessage = ` Plus TZS ${referralResult.inviteeBonus.toLocaleString()} referral bonus added to your wallet!`;
+                // Clear cart and selections
+                setCart([]);
+                storage.set(STORAGE_KEYS.CART, []);
+                setIsCheckingOut(false);
+                setIsCartOpen(false);
+                setReferralDiscount(0);
+                setPaymentMethod('');
+                setDeliveryTransport('');
+                setDeliveryAddress('');
+                setDeliveryLocation(null);
+                setDeliveryDistance(null);
+                // Keep phone number for next time
+
+                // Show success message
+                setToast({
+                    type: 'success',
+                    message: `Payment successful! Please allocate your cashback.`
+                });
+
+                // Open Cashback Allocation Modal
+                setEarnedCashback(potentialCashback);
+                setIsCashbackModalOpen(true);
+
+            } else {
+                setToast({ type: 'error', message: 'Payment failed. Please try again.' });
+                setIsCheckingOut(false);
+            }
+        } catch (error) {
+            console.error('Checkout error:', error);
+            setToast({ type: 'error', message: 'An error occurred during checkout.' });
+            setIsCheckingOut(false);
         }
+    };
 
-        // Clear cart and selections
-        setCart([]);
-        storage.set(STORAGE_KEYS.CART, []);
-        setIsCheckingOut(false);
-        setIsCartOpen(false);
-        setReferralDiscount(0);
-        setPaymentMethod('');
-        setDeliveryTransport('');
-        setDeliveryAddress('');
-        setDeliveryLocation(null);
-        setDeliveryDistance(null);
-        setPhoneNumber('');
-
-        // Get selected payment and delivery names for message
-        const paymentName = paymentMethods.find(p => p.id === paymentMethod)?.name;
-        const deliveryName = selectedDelivery?.name;
-        const distanceInfo = deliveryDistance ? ` (${deliveryDistance.toFixed(1)}km from ${SHOP_LOCATION.name})` : '';
-
-        // Construct success message
-        let message = `Purchase successful! ${cart.length} order(s) created. Redirecting to dashboard...`;
-        if (result.investedAmount > 0) {
-            message += ` Auto-invested TZS ${result.investedAmount.toLocaleString()}.`;
+    const handleInvestCashback = async (amount, provider, details) => {
+        const result = createInvestment(user?.id || 'guest', amount, provider, details);
+        if (result.success) {
+            // Redirect to dashboard after short delay
+            setTimeout(() => router.push('/user-dashboard'), 2000);
         }
-        message += referralMessage;
+    };
 
-        setToast({ type: 'success', message });
-        
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
-            router.push('/user-dashboard');
-        }, 2000);
+    const handleWithdrawCashback = async (amount, phone) => {
+        const result = createWithdrawal(user?.id || 'guest', amount, phone);
+        if (result.success) {
+            // Redirect to dashboard after short delay
+            setTimeout(() => router.push('/user-dashboard'), 2000);
+        }
     };
 
     const handleScanPayment = async (product) => {
@@ -387,7 +411,7 @@ export default function ShopPage() {
     // Helper function to render icons
     const renderIcon = (iconName, size = 20, className = '') => {
         const iconProps = { size, className };
-        switch(iconName) {
+        switch (iconName) {
             case 'smartphone': return <Smartphone {...iconProps} />;
             case 'credit-card': return <CreditCard {...iconProps} />;
             case 'banknote': return <CreditCard {...iconProps} />;
@@ -799,7 +823,7 @@ export default function ShopPage() {
             <Modal
                 isOpen={!!selectedProduct}
                 onClose={() => setSelectedProduct(null)}
-                title="Product Details"
+                title={selectedProduct?.name || 'Product Details'}
             >
                 {selectedProduct && (
                     <div className="space-y-4 max-h-[80vh] overflow-y-auto">
@@ -887,6 +911,15 @@ export default function ShopPage() {
                 )}
             </Modal>
 
+            {/* Cashback Allocation Modal */}
+            <CashbackAllocationModal
+                isOpen={isCashbackModalOpen}
+                onClose={() => setIsCashbackModalOpen(false)}
+                amount={earnedCashback}
+                onInvest={handleInvestCashback}
+                onWithdraw={handleWithdrawCashback}
+            />
+
             {/* Review Modal */}
             <Modal
                 isOpen={isReviewOpen}
@@ -971,13 +1004,15 @@ export default function ShopPage() {
             />
 
             {/* Toast Notification */}
-            {toast && (
-                <Toast
-                    message={toast.message}
-                    type={toast.type}
-                    onClose={() => setToast(null)}
-                />
-            )}
+            {
+                toast && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
+                )
+            }
 
             {/* QR Code Modal */}
             <QRCodeModal
@@ -987,16 +1022,18 @@ export default function ShopPage() {
             />
 
             {/* Scan to Pay Modal */}
-            {isScanPayOpen && (
-                <ScanPayModal
-                    isOpen={isScanPayOpen}
-                    onClose={() => setIsScanPayOpen(false)}
-                    onConfirmPayment={(product) => {
-                        handleScanPayment(product);
-                        setIsScanPayOpen(false);
-                    }}
-                />
-            )}
-        </div>
+            {
+                isScanPayOpen && (
+                    <ScanPayModal
+                        isOpen={isScanPayOpen}
+                        onClose={() => setIsScanPayOpen(false)}
+                        onConfirmPayment={(product) => {
+                            handleScanPayment(product);
+                            setIsScanPayOpen(false);
+                        }}
+                    />
+                )
+            }
+        </div >
     );
 }
