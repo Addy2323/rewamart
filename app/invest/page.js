@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, Info, CheckCircle, AlertCircle, BookOpen, Lightbulb, Award, X, Cog } from 'lucide-react';
 import Modal from '../../components/Modal';
 import Toast from '../../components/Toast';
-import { INVESTMENT_TYPES, calculateInvestmentCost, validateInvestment, addInvestment, getInvestments } from '../../lib/investments';
-import { deductFunds, getWallet } from '../../lib/wallet';
+import { INVESTMENT_TYPES, calculateInvestmentCost, validateInvestment, createInvestment, getInvestmentsByUser } from '../../lib/investments';
+import { getWallet } from '../../lib/wallet';
+import { getCurrentUser } from '../../lib/auth';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 
 export default function InvestPage() {
@@ -15,7 +16,7 @@ export default function InvestPage() {
     const [costPreview, setCostPreview] = useState(null);
     const [toast, setToast] = useState(null);
     const [portfolio, setPortfolio] = useState([]);
-    const [wallet, setWallet] = useState(null);
+    const [wallet, setWallet] = useState({ balance: 0 });
     const [uttAccountNumber, setUttAccountNumber] = useState('');
     const [selectedFund, setSelectedFund] = useState('');
     const [mPesaNumber, setMPesaNumber] = useState('');
@@ -23,6 +24,7 @@ export default function InvestPage() {
     const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
     const [autoInvestEnabled, setAutoInvestEnabled] = useState(false);
     const [autoInvestPercentage, setAutoInvestPercentage] = useState(10);
+    const [user, setUser] = useState(null);
 
     const successStories = [
         { name: 'Sarah', location: 'Dar es Salaam', initial: 5000, final: 150000, years: 2 },
@@ -43,8 +45,20 @@ export default function InvestPage() {
     ];
 
     useEffect(() => {
-        setPortfolio(getInvestments());
-        setWallet(getWallet());
+        const currentUser = getCurrentUser();
+        setUser(currentUser);
+
+        const loadData = async () => {
+            if (currentUser) {
+                const userInvestments = await getInvestmentsByUser(currentUser.id);
+                setPortfolio(userInvestments);
+
+                const walletData = await getWallet();
+                setWallet(walletData);
+            }
+        };
+
+        loadData();
 
         // Load auto-invest settings
         const savedSettings = storage.get(STORAGE_KEYS.AUTO_INVEST_SETTINGS, { enabled: false, percentage: 10 });
@@ -78,9 +92,14 @@ export default function InvestPage() {
         });
     };
 
-    const handleInvest = (e) => {
+    const handleInvest = async (e) => {
         e.preventDefault();
         const investAmount = Number(amount);
+
+        if (!user) {
+            setToast({ type: 'error', message: 'Please login to invest' });
+            return;
+        }
 
         // Validate UTT-specific fields
         if (selectedType.id === 'utt') {
@@ -122,29 +141,28 @@ export default function InvestPage() {
         }
 
         // Process transaction
-        const result = deductFunds(totalCost, `Investment in ${selectedType.name}`, 'investment');
+        // Backend handles deduction
+        const result = await createInvestment(user.id, investAmount, selectedType.id, {
+            fundId: selectedFund,
+            uttAccountNumber,
+            mPesaNumber
+        });
 
         if (result.success) {
-            addInvestment({
-                typeId: selectedType.id,
-                typeName: selectedType.name,
-                amount: investAmount,
-                fee: costPreview.fee,
-                returnRate: selectedType.options?.[0]?.return || 'Market Based',
-                ...(selectedType.id === 'utt' && { uttAccountNumber, selectedFund }),
-                ...(selectedType.id === 'mwekeza' && { mPesaNumber })
-            });
-
             setToast({ type: 'success', message: 'Investment successful!' });
             setSelectedType(null);
             setAmount('');
             setUttAccountNumber('');
             setSelectedFund('');
             setMPesaNumber('');
-            setPortfolio(getInvestments());
-            setWallet(getWallet());
+
+            // Refresh data
+            const userInvestments = await getInvestmentsByUser(user.id);
+            setPortfolio(userInvestments);
+            const walletData = await getWallet();
+            setWallet(walletData);
         } else {
-            setToast({ type: 'error', message: result.error });
+            setToast({ type: 'error', message: result.error || 'Investment failed' });
         }
     };
 

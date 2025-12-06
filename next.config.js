@@ -11,6 +11,10 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'rewamart.com',
             },
+            {
+                protocol: 'https',
+                hostname: 'www.avesafya-oil.com',
+            },
         ],
     },
     env: {

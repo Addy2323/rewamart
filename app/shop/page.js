@@ -110,18 +110,27 @@ export default function ShopPage() {
 
     useEffect(() => {
         // Load products with dynamic cashback
-        const allProducts = getAllProducts();
-        let filtered = activeCategory === 'all'
-            ? allProducts
-            : allProducts.filter(p => p.category === activeCategory);
+        const loadProducts = async () => {
+            try {
+                const allProducts = await getAllProducts();
+                let filtered = activeCategory === 'all'
+                    ? allProducts
+                    : allProducts.filter(p => p.category === activeCategory);
 
-        if (searchQuery) {
-            filtered = filtered.filter(p =>
-                p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.vendor.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        }
-        setProducts(filtered);
+                if (searchQuery) {
+                    filtered = filtered.filter(p =>
+                        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (p.vendor && p.vendor.toLowerCase().includes(searchQuery.toLowerCase()))
+                    );
+                }
+                setProducts(filtered);
+            } catch (error) {
+                console.error('Error loading products:', error);
+                setProducts([]);
+            }
+        };
+
+        loadProducts();
     }, [activeCategory, searchQuery]);
 
     useEffect(() => {

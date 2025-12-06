@@ -17,15 +17,36 @@ export default function AdminDashboard() {
     const [toast, setToast] = useState(null);
 
     useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'admin') {
-            router.push('/auth');
-            return;
-        }
-        setUser(currentUser);
-        setVendors(getAllVendors());
-        setCustomers(getAllCustomers());
-        setProducts(getAllProducts());
+        const loadDashboardData = async () => {
+            const currentUser = getCurrentUser();
+            if (!currentUser || currentUser.role !== 'admin') {
+                router.push('/auth');
+                return;
+            }
+            setUser(currentUser);
+
+            try {
+                // Fetch all data in parallel
+                const [vendorsData, customersData, productsData] = await Promise.all([
+                    getAllVendors(),
+                    getAllCustomers(),
+                    getAllProducts()
+                ]);
+
+                setVendors(vendorsData || []);
+                setCustomers(customersData || []);
+                setProducts(productsData || []);
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                setToast({ type: 'error', message: 'Failed to load dashboard data' });
+                // Initialize with empty arrays to prevent crashes
+                setVendors([]);
+                setCustomers([]);
+                setProducts([]);
+            }
+        };
+
+        loadDashboardData();
     }, [router]);
 
     const handleLogout = () => {
@@ -122,10 +143,18 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Vendors Management */}
                     <div className="bg-white rounded-xl shadow-md p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
-                            <Package size={24} className="text-green-600" />
-                            <span>Vendors</span>
-                        </h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center space-x-2">
+                                <Package size={24} className="text-green-600" />
+                                <span>Vendors</span>
+                            </h3>
+                            <Link
+                                href="/admin-dashboard/vendors"
+                                className="text-sm text-emerald-600 font-medium hover:underline"
+                            >
+                                Manage Vendors →
+                            </Link>
+                        </div>
                         {vendors.length > 0 ? (
                             <div className="space-y-3 max-h-96 overflow-y-auto">
                                 {vendors.map(vendor => (
@@ -181,10 +210,18 @@ export default function AdminDashboard() {
 
                 {/* Products Overview */}
                 <div className="bg-white rounded-xl shadow-md p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
-                        <Package size={24} className="text-orange-600" />
-                        <span>Products Overview</span>
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center space-x-2">
+                            <Package size={24} className="text-orange-600" />
+                            <span>Products Overview</span>
+                        </h3>
+                        <Link
+                            href="/admin-dashboard/products"
+                            className="text-sm text-orange-600 font-medium hover:underline"
+                        >
+                            Manage Products →
+                        </Link>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4">
                             <p className="text-gray-600 text-sm">Total Products</p>

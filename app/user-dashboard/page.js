@@ -35,26 +35,26 @@ export default function UserDashboard() {
         }
         setUser(currentUser);
 
-        // Load investment stats
-        const stats = getInvestmentStats(currentUser.id);
-        setInvestmentStats(stats);
+        const loadData = async () => {
+            // Load investment stats
+            const stats = await getInvestmentStats(currentUser.id);
+            setInvestmentStats(stats);
 
-        // Load withdrawals
-        const withdrawn = getTotalWithdrawn(currentUser.id);
-        setTotalWithdrawn(withdrawn);
+            // Load withdrawals
+            const withdrawn = await getTotalWithdrawn(currentUser.id);
+            setTotalWithdrawn(withdrawn);
 
-        // Load user profile
-        const userData = getUserById(currentUser.id);
-        if (userData?.profile) {
-            setProfile(userData.profile);
-        }
+            // Load user profile
+            const userData = getUserById(currentUser.id);
+            if (userData?.profile) {
+                setProfile(userData.profile);
+            }
 
-        // Load orders from new order system
-        const userOrders = getOrdersByUser(currentUser.id);
-        setOrders(userOrders);
+            // Load orders from new order system
+            const userOrders = getOrdersByUser(currentUser.id);
+            setOrders(userOrders);
 
-        // Fetch recommended products
-        const fetchRecommendedProducts = async () => {
+            // Fetch recommended products
             if (currentUser) {
                 const response = await fetch(`/api/products/for-you?userId=${currentUser.id}`);
                 if (response.ok) {
@@ -64,7 +64,7 @@ export default function UserDashboard() {
             }
         };
 
-        fetchRecommendedProducts();
+        loadData();
     }, [router]);
 
 

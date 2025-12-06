@@ -3,6 +3,7 @@ import './globals.css';
 import Navbar from '../components/Navbar';
 import BottomNav from '../components/BottomNav';
 import ThemeProvider from '../components/ThemeProvider';
+import AppWrapper from '../components/AppWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,11 +20,13 @@ export default function RootLayout({ children }) {
         <html lang="en">
             <body className={inter.className}>
                 <ThemeProvider>
-                    <Navbar />
-                    <main className="min-h-screen pb-20 dark:bg-gray-900 dark:text-white transition-colors bg-white">
-                        {children}
-                    </main>
-                    <BottomNav />
+                    <AppWrapper>
+                        <Navbar />
+                        <main className="min-h-screen pb-20 dark:bg-gray-900 dark:text-white transition-colors bg-white">
+                            {children}
+                        </main>
+                        <BottomNav />
+                    </AppWrapper>
                 </ThemeProvider>
             </body>
         </html>

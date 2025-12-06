@@ -19,10 +19,34 @@ export default function Dashboard() {
         // Check authentication
         setAuthenticated(isAuthenticated());
 
-        // Load initial data
-        setWallet(getWallet());
-        setTransactions(getTransactions().slice(0, 5)); // Get last 5 transactions
-        setReferralData(getReferralData());
+        // Load initial data asynchronously
+        const loadData = async () => {
+            try {
+                const walletData = await getWallet();
+                const transactionData = await getTransactions();
+                const referral = getReferralData();
+
+                setWallet(walletData);
+                setTransactions(transactionData.slice(0, 5)); // Get last 5 transactions
+                setReferralData(referral);
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                // Set default values on error
+                setWallet({
+                    balance: 0,
+                    totalEarned: 0,
+                    totalInvested: 0,
+                    cashbackTotal: 0,
+                    bonusTotal: 0,
+                    autoInvestEnabled: false,
+                    autoInvestPercent: 10
+                });
+                setTransactions([]);
+                setReferralData({ earnings: 0 });
+            }
+        };
+
+        loadData();
     }, []);
 
     if (!wallet) return <div className="p-8 text-center text-gray-900 dark:text-white">Loading...</div>;
@@ -62,15 +86,7 @@ export default function Dashboard() {
                                     <h2 className="text-2xl font-bold mb-4 md:mb-0">Valued Customer</h2>
                                 </div>
 
-                                <div className="flex items-end justify-between md:space-x-8">
-                                    <div>
-                                        <p className="text-emerald-100 text-xs mb-1">Total Balance</p>
-                                        <h3 className="text-3xl font-bold">TZS {wallet.balance.toLocaleString()}</h3>
-                                    </div>
-                                    <Link href="/wallet" className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition-colors">
-                                        <ArrowRight size={20} />
-                                    </Link>
-                                </div>
+
                             </div>
                         </div>
 
@@ -94,7 +110,6 @@ export default function Dashboard() {
                         <div className="hidden md:block">
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="font-bold text-gray-800">Recent Activity</h3>
-                                <Link href="/wallet" className="text-xs text-emerald-600 font-medium">View All</Link>
                             </div>
 
                             <div className="space-y-3">
@@ -177,7 +192,6 @@ export default function Dashboard() {
                 <div className="md:hidden">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="font-bold text-gray-800">Recent Activity</h3>
-                        <Link href="/wallet" className="text-xs text-emerald-600 font-medium">View All</Link>
                     </div>
 
                     <div className="space-y-3">

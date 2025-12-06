@@ -10,7 +10,7 @@ export default function BottomNav() {
     const navItems = [
         { href: '/', label: 'Home', icon: Home },
         { href: '/shop', label: 'Shop', icon: ShoppingBag },
-        { href: '/wallet', label: 'Wallet', icon: Wallet },
+
         { href: '/invest', label: 'Invest', icon: TrendingUp },
         { href: '/referrals', label: 'Referrals', icon: Gift },
         { href: '/profile', label: 'Profile', icon: User },

@@ -37,21 +37,26 @@ export default function AuthPage() {
             return;
         }
 
-        const result = loginUser(loginForm.email, loginForm.password);
+        try {
+            const result = await loginUser(loginForm.email, loginForm.password);
 
-        if (result.success) {
-            setToast({ type: 'success', message: 'Login successful!' });
-            setTimeout(() => {
-                if (result.user.role === 'admin') {
-                    router.push('/admin-dashboard');
-                } else if (result.user.role === 'vendor') {
-                    router.push('/vendor-dashboard');
-                } else {
-                    router.push('/user-dashboard');
-                }
-            }, 1500);
-        } else {
-            setToast({ type: 'error', message: result.error });
+            if (result.success) {
+                setToast({ type: 'success', message: 'Login successful!' });
+                setTimeout(() => {
+                    if (result.user.role === 'admin') {
+                        router.push('/admin-dashboard');
+                    } else if (result.user.role === 'vendor') {
+                        router.push('/vendor-dashboard');
+                    } else {
+                        router.push('/user-dashboard');
+                    }
+                }, 1500);
+            } else {
+                setToast({ type: 'error', message: result.error || 'Invalid email or password' });
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            setToast({ type: 'error', message: error.message || 'Login failed. Please try again.' });
         }
 
         setLoading(false);
@@ -73,16 +78,21 @@ export default function AuthPage() {
             return;
         }
 
-        const result = registerUser(registerForm.email, registerForm.password, registerForm.name, registerForm.role);
+        try {
+            const result = await registerUser(registerForm.email, registerForm.password, registerForm.name, '', null);
 
-        if (result.success) {
-            setToast({ type: 'success', message: 'Account created! Please login.' });
-            setTimeout(() => {
-                setIsLogin(true);
-                setRegisterForm({ name: '', email: '', password: '', confirmPassword: '', role: 'customer' });
-            }, 1500);
-        } else {
-            setToast({ type: 'error', message: result.error });
+            if (result.success) {
+                setToast({ type: 'success', message: 'Account created! Please login.' });
+                setTimeout(() => {
+                    setIsLogin(true);
+                    setRegisterForm({ name: '', email: '', password: '', confirmPassword: '', role: 'customer' });
+                }, 1500);
+            } else {
+                setToast({ type: 'error', message: result.error || 'Registration failed' });
+            }
+        } catch (error) {
+            console.error('Register error:', error);
+            setToast({ type: 'error', message: error.message || 'Registration failed. Please try again.' });
         }
 
         setLoading(false);
@@ -213,20 +223,7 @@ export default function AuthPage() {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Account Type</label>
-                                <select
-                                    value={registerForm.role}
-                                    onChange={(e) => setRegisterForm({ ...registerForm, role: e.target.value })}
-                                    className={`w-full px-4 py-2 border rounded-lg outline-none transition-all text-gray-900 dark:text-white ${registerForm.role
-                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 focus:ring-2 focus:ring-emerald-500'
-                                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500'
-                                        }`}
-                                >
-                                    <option value="customer">Customer</option>
-                                    <option value="vendor">Vendor</option>
-                                </select>
-                            </div>
+
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
@@ -279,15 +276,7 @@ export default function AuthPage() {
                         </form>
                     )}
 
-                    {/* Guest Access */}
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <Link
-                            href="/shop"
-                            className="block text-center text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
-                        >
-                            Continue as Guest
-                        </Link>
-                    </div>
+
                 </div>
             </div>
 

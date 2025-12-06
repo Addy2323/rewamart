@@ -8,25 +8,12 @@ import { getCurrentUser } from '../lib/auth';
 import { Wallet, ShoppingBag, TrendingUp, Users, User, LayoutDashboard } from 'lucide-react';
 
 export default function Navbar() {
-    const [balance, setBalance] = useState(0);
     const [user, setUser] = useState(null);
     const pathname = usePathname();
 
     useEffect(() => {
-        // Initial load
-        const wallet = getWallet();
-        setBalance(wallet.balance);
-
         const currentUser = getCurrentUser();
         setUser(currentUser);
-
-        // Poll for changes (simple way to keep in sync without complex state management)
-        const interval = setInterval(() => {
-            const w = getWallet();
-            setBalance(w.balance);
-        }, 1000);
-
-        return () => clearInterval(interval);
     }, []);
 
     return (

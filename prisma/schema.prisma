@@ -1,98 +1,100 @@
-// prisma/schema.prisma
+// RewaMart Prisma Schema - PostgreSQL
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+// ============================================
+// USER & AUTHENTICATION MODELS
+// ============================================
+
 model User {
-  id        Int     @id @default(autoincrement())
-  email     String  @unique
-  name      String
-  password  String
-  role      String  @default("customer")
-  createdAt DateTime @default(now())
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  phone         String?   @unique
+  name          String
+  password      String
+  role          String    @default("customer") // "customer", "admin"
+  referralCode  String    @unique
+  referredBy    String?   // referral code of person who referred this user
+  walletBalance Float     @default(0)
+  autoInvest    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   
-  interactions UserInteraction[]
-  orders       Order[]
+  // Relations
+  orders          Order[]
+  walletTransactions WalletTransaction[]
+  investments     Investment[]
+  referrals       Referral[] @relation("ReferrerUser")
+  referredUsers   Referral[] @relation("ReferredUser")
+  cashbacks       Cashback[]
+  addresses       Address[]
   
   @@map("users")
 }
 
+// ============================================
+// E-COMMERCE MODELS
+// ============================================
+
 model Category {
-  id        Int     @id @default(autoincrement())
-  name      String  @unique
-  slug      String  @unique
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  slug        String    @unique
   description String?
-  createdAt DateTime @default(now())
+  image       String?
+  createdAt   DateTime  @default(now())
   
-  products  Product[]
-  interactions UserInteraction[]
+  products    Product[]
   
   @@map("categories")
 }
 
 model Product {
-  id          Int     @id @default(autoincrement())
-  name        String
-  description String  @db.LongText
-  price       Float
-  image       String
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
-  inStock     Boolean @default(true)
-  cashbackRate Float @default(0)
-  vendor      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int       @id @default(autoincrement())
+  name         String
+  description  String    @db.Text
+  price        Float
+  image        String
+  categoryId   Int
+  category     Category  @relation(fields: [categoryId], references: [id])
+  inStock      Boolean   @default(true)
+  stockCount   Int       @default(0)
+  cashbackRate Float     @default(5.0) // percentage
+  vendor       String    @default("RewaMart")
+  rating       Float     @default(0)
+  reviewCount  Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   
-  interactions UserInteraction[]
   orderItems   OrderItem[]
   
   @@map("products")
 }
 
-model UserInteraction {
-  id        Int     @id @default(autoincrement())
-  userId    Int
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId Int
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  categoryId Int
-  category  Category @relation(fields: [categoryId], references: [id])
-  interactionType String // "view", "click", "purchase"
-  viewedAt  DateTime @default(now())
-  
-  @@index([userId])
-  @@index([productId])
-  @@index([categoryId])
-  @@map("user_interactions")
-}
-
-model NewProductDaily {
-  id        Int     @id @default(autoincrement())
-  productId Int
-  product   Product @relation("NewProductDaily", fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  
-  @@unique([productId, createdAt])
-  @@map("new_products_daily")
-}
-
 model Order {
-  id        Int     @id @default(autoincrement())
-  userId    Int
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalAmount Float
-  status    String  @default("pending")
-  createdAt DateTime @default(now())
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalAmount     Float
+  cashbackEarned  Float     @default(0)
+  status          String    @default("pending") // "pending", "processing", "completed", "cancelled"
+  paymentMethod   String?   // "wallet", "mpesa", "tigo", "airtel"
+  paymentStatus   String    @default("pending") // "pending", "paid", "failed"
+  deliveryAddress String?
+  deliveryStatus  String    @default("pending") // "pending", "dispatched", "delivered"
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   
-  items     OrderItem[]
+  items           OrderItem[]
   
   @@index([userId])
+  @@index([status])
   @@map("orders")
 }
 
@@ -104,6 +106,119 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
   price     Float
+  cashback  Float   @default(0)
   
   @@map("order_items")
+}
+
+model Address {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String   // "Home", "Work", etc.
+  street    String
+  city      String
+  region    String
+  phone     String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@map("addresses")
+}
+
+// ============================================
+// WALLET & TRANSACTIONS MODELS
+// ============================================
+
+model WalletTransaction {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // "deposit", "withdrawal", "cashback", "investment", "order_payment", "referral_commission"
+  amount      Float
+  balanceBefore Float
+  balanceAfter  Float
+  status      String   @default("completed") // "pending", "completed", "failed"
+  reference   String?  // order ID, investment ID, etc.
+  description String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([type])
+  @@map("wallet_transactions")
+}
+
+model Cashback {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId   Int
+  amount    Float
+  status    String   @default("credited") // "pending", "credited"
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@map("cashbacks")
+}
+
+// ============================================
+// INVESTMENT MODELS
+// ============================================
+
+model InvestmentPlan {
+  id              Int      @id @default(autoincrement())
+  name            String   @unique // "Basic", "Standard", "Premium", "Elite"
+  minAmount       Float
+  maxAmount       Float?
+  returnRate      Float    // annual percentage
+  duration        Int      // in days
+  description     String   @db.Text
+  features        String[] // array of features
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  
+  investments     Investment[]
+  
+  @@map("investment_plans")
+}
+
+model Investment {
+  id              Int            @id @default(autoincrement())
+  userId          Int
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId          Int
+  plan            InvestmentPlan @relation(fields: [planId], references: [id])
+  amount          Float
+  currentValue    Float          @default(0)
+  expectedReturn  Float
+  status          String         @default("active") // "active", "matured", "withdrawn"
+  startDate       DateTime       @default(now())
+  maturityDate    DateTime
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@map("investments")
+}
+
+// ============================================
+// REFERRAL MODELS
+// ============================================
+
+model Referral {
+  id              Int      @id @default(autoincrement())
+  referrerId      Int      // user who referred
+  referrer        User     @relation("ReferrerUser", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId      Int      // user who was referred
+  referred        User     @relation("ReferredUser", fields: [referredId], references: [id], onDelete: Cascade)
+  commissionRate  Float    @default(5.0) // percentage
+  totalCommission Float    @default(0)
+  status          String   @default("active") // "active", "inactive"
+  createdAt       DateTime @default(now())
+  
+  @@unique([referrerId, referredId])
+  @@index([referrerId])
+  @@index([referredId])
+  @@map("referrals")
 }

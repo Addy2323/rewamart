@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Package, TrendingUp, Users, Settings, Store, BarChart3, Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { getCurrentUser, getUserById, updateUserProfile } from '../../lib/auth';
+import { productsAPI } from '../../lib/api';
 import Toast from '../../components/Toast';
 import Modal from '../../components/Modal';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
@@ -13,6 +14,7 @@ export default function VendorDashboard() {
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [toast, setToast] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -50,8 +52,20 @@ export default function VendorDashboard() {
         }
 
         // Fetch vendor products from API
-        fetchVendorProducts();
+        fetchVendorProducts(currentUser);
+        fetchCategories();
     }, [router]);
+
+    const fetchCategories = async () => {
+        try {
+            const result = await productsAPI.getCategories();
+            if (result.success) {
+                setCategories(result.data.categories);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
 
     useEffect(() => {
         const filtered = products.filter(p =>
@@ -60,31 +74,47 @@ export default function VendorDashboard() {
         setFilteredProducts(filtered);
     }, [searchQuery, products]);
 
-    const fetchVendorProducts = () => {
+    const fetchVendorProducts = async (currentUser) => {
         try {
-            // Load vendor products from localStorage
-            const vendorProducts = storage.get(STORAGE_KEYS.VENDOR_PRODUCTS, []);
-            setProducts(vendorProducts);
+            const vendorName = currentUser?.name || user?.name;
+            if (!vendorName) return;
+
+            // Fetch products filtered by vendor name
+            const result = await productsAPI.getAll({ vendor: vendorName });
+
+            if (result.success) {
+                setProducts(result.data.products);
+            }
         } catch (error) {
             console.error('Error fetching products:', error);
+            setToast({ type: 'error', message: 'Failed to load products' });
         }
     };
 
-
-    const handleUpdateProfile = () => {
-        const result = updateUserProfile(user.id, profile);
+    const handleUpdateProfile = async () => {
+        const result = await updateUserProfile(user.id, profile);
         if (result.success) {
             setToast({ type: 'success', message: 'Profile updated successfully' });
             setIsEditing(false);
         } else {
-            setToast({ type: 'error', message: result.error });
+            setToast({ type: 'error', message: result.error || 'Failed to update profile' });
         }
     };
 
     const handleOpenProductModal = (product = null) => {
         if (product) {
             setEditingProduct(product);
-            setFormData(product);
+            setFormData({
+                name: product.name || '',
+                price: product.price || '',
+                description: product.description || '',
+                image: product.image || '',
+                vendor: product.vendor || user?.name || '',
+                inStock: product.inStock ?? true,
+                rating: product.rating || '4.5',
+                cashback: product.cashbackRate || '0',
+                categoryId: product.categoryId || '1',
+            });
         } else {
             setEditingProduct(null);
             setFormData({
@@ -96,6 +126,7 @@ export default function VendorDashboard() {
                 inStock: true,
                 rating: '4.5',
                 cashback: '0',
+                categoryId: '1', // Default category
             });
         }
         setIsProductModalOpen(true);
@@ -117,44 +148,31 @@ export default function VendorDashboard() {
     const handleSaveProduct = async (e) => {
         e.preventDefault();
         try {
-            // Get existing vendor products from storage
-            const vendorProducts = storage.get(STORAGE_KEYS.VENDOR_PRODUCTS, []);
+            const productData = {
+                ...formData,
+                price: Number(formData.price),
+                cashbackRate: Number(formData.cashback) || 0,
+                categoryId: Number(formData.categoryId) || 1, // Ensure categoryId is a number
+                vendor: user.name, // Enforce vendor name
+            };
 
+            let result;
             if (editingProduct) {
-                // Update existing product
-                const index = vendorProducts.findIndex(p => p.id === editingProduct.id);
-                if (index !== -1) {
-                    vendorProducts[index] = {
-                        ...vendorProducts[index],
-                        ...formData,
-                        price: Number(formData.price),
-                        cashback: Number(formData.cashback) || 0,
-                        cashbackRate: Number(formData.cashback) || 0,
-                    };
-                }
+                result = await productsAPI.update(editingProduct.id, productData);
             } else {
-                // Add new product
-                const newProduct = {
-                    id: 'vendor_' + Date.now(),
-                    ...formData,
-                    price: Number(formData.price),
-                    cashback: Number(formData.cashback) || 0,
-                    cashbackRate: Number(formData.cashback) || 0,
-                    inStock: formData.inStock !== false,
-                    rating: Number(formData.rating) || 4.5,
-                };
-                vendorProducts.push(newProduct);
+                result = await productsAPI.create(productData);
             }
 
-            // Save to localStorage
-            storage.set(STORAGE_KEYS.VENDOR_PRODUCTS, vendorProducts);
-
-            setToast({
-                type: 'success',
-                message: editingProduct ? 'Product updated' : 'Product added',
-            });
-            handleCloseProductModal();
-            fetchVendorProducts();
+            if (result.success) {
+                setToast({
+                    type: 'success',
+                    message: editingProduct ? 'Product updated' : 'Product added',
+                });
+                handleCloseProductModal();
+                fetchVendorProducts();
+            } else {
+                setToast({ type: 'error', message: result.error || 'Failed to save product' });
+            }
         } catch (error) {
             console.error('Error saving product:', error);
             setToast({ type: 'error', message: 'Failed to save product' });
@@ -165,17 +183,14 @@ export default function VendorDashboard() {
         if (!confirm('Delete this product?')) return;
 
         try {
-            // Get existing vendor products from storage
-            const vendorProducts = storage.get(STORAGE_KEYS.VENDOR_PRODUCTS, []);
+            const result = await productsAPI.delete(id);
 
-            // Filter out the product to delete
-            const updatedProducts = vendorProducts.filter(p => p.id !== id);
-
-            // Save to localStorage
-            storage.set(STORAGE_KEYS.VENDOR_PRODUCTS, updatedProducts);
-
-            setToast({ type: 'success', message: 'Product deleted' });
-            fetchVendorProducts();
+            if (result.success) {
+                setToast({ type: 'success', message: 'Product deleted' });
+                fetchVendorProducts();
+            } else {
+                setToast({ type: 'error', message: result.error || 'Failed to delete product' });
+            }
         } catch (error) {
             console.error('Error deleting product:', error);
             setToast({ type: 'error', message: 'Failed to delete product' });
@@ -448,6 +463,20 @@ export default function VendorDashboard() {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                 placeholder="Enter product name"
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <select
+                                name="categoryId"
+                                value={formData.categoryId}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
