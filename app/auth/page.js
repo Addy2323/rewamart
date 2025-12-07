@@ -141,6 +141,9 @@ export default function AuthPage() {
                                     <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
                                     <input
                                         type="email"
+                                        name="email"
+                                        id="login-email"
+                                        autoComplete="email"
                                         value={loginForm.email}
                                         onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                                         placeholder="Enter your email"
@@ -158,6 +161,9 @@ export default function AuthPage() {
                                     <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
                                     <input
                                         type={showPassword ? 'text' : 'password'}
+                                        name="password"
+                                        id="login-password"
+                                        autoComplete="current-password"
                                         value={loginForm.password}
                                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                                         placeholder="Enter your password"
