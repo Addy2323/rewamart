@@ -65,6 +65,41 @@ export default function UserDashboard() {
         };
 
         loadData();
+
+        // Polling for new products
+        const pollInterval = setInterval(async () => {
+            try {
+                const lastCheck = localStorage.getItem('lastUserCheck') || new Date().toISOString();
+                const response = await fetch(`/api/notifications/check?type=new_products&since=${lastCheck}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data.hasNew) {
+                        setToast({
+                            type: 'success',
+                            message: data.data.latestItem.message
+                        });
+                        // Update last check time
+                        localStorage.setItem('lastUserCheck', new Date().toISOString());
+                        // Refresh recommended products
+                        const recResponse = await fetch(`/api/products/for-you?userId=${currentUser.id}`);
+                        if (recResponse.ok) {
+                            const recData = await recResponse.json();
+                            setRecommendedProducts(recData.products);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Notification poll error:', error);
+            }
+        }, 15000); // Check every 15 seconds
+
+        // Initialize last check time if not set
+        if (!localStorage.getItem('lastUserCheck')) {
+            localStorage.setItem('lastUserCheck', new Date().toISOString());
+        }
+
+        return () => clearInterval(pollInterval);
     }, [router]);
 
 

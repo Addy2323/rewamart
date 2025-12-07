@@ -15,6 +15,10 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'www.avesafya-oil.com',
             },
+            {
+                protocol: 'https',
+                hostname: 'placehold.co',
+            },
         ],
     },
     env: {

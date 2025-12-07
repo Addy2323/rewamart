@@ -2,8 +2,11 @@ import Link from 'next/link';
 
 export default function NotFound() {
     return (
-        <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center">
-            <div className="space-y-6">
+        <div
+            className="fixed inset-0 overflow-y-auto bg-cover bg-center flex flex-col items-center justify-center px-4 text-center z-50"
+            style={{ backgroundImage: "url('/images/image2.png')" }}
+        >
+            <div className="space-y-6 bg-white/10 dark:bg-gray-900/10 p-8 rounded-2xl shadow-2xl backdrop-blur-md max-w-lg w-full border border-white/20">
                 {/* Icon */}
                 <div className="relative w-32 h-32 mx-auto mb-8 animate-float">
                     <div className="absolute inset-0 bg-primary/20 rounded-full animate-pulse"></div>
@@ -24,7 +27,7 @@ export default function NotFound() {
 
                 <h1 className="text-6xl font-bold text-gray-900 dark:text-white animate-fade-in-up">404</h1>
                 <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 animate-fade-in-up delay-100">Page Not Found</h2>
-                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto animate-fade-in-up delay-200">
+                <p className="text-gray-600 dark:text-gray-400 animate-fade-in-up delay-200">
                     Oops! The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
                 </p>
 

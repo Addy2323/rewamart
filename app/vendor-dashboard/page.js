@@ -54,6 +54,37 @@ export default function VendorDashboard() {
         // Fetch vendor products from API
         fetchVendorProducts(currentUser);
         fetchCategories();
+
+        // Polling for notifications
+        const pollInterval = setInterval(async () => {
+            try {
+                const lastCheck = localStorage.getItem('lastVendorCheck') || new Date().toISOString();
+                const response = await fetch(`/api/notifications/check?type=vendor_orders&userId=${currentUser.id}&since=${lastCheck}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data.hasNew) {
+                        setToast({
+                            type: 'success',
+                            message: data.data.latestItem.message
+                        });
+                        // Update last check time
+                        localStorage.setItem('lastVendorCheck', new Date().toISOString());
+                        // Refresh products/stats if needed (optional, but good for keeping stats sync)
+                        fetchVendorProducts(currentUser);
+                    }
+                }
+            } catch (error) {
+                console.error('Notification poll error:', error);
+            }
+        }, 15000); // Check every 15 seconds
+
+        // Initialize last check time if not set
+        if (!localStorage.getItem('lastVendorCheck')) {
+            localStorage.setItem('lastVendorCheck', new Date().toISOString());
+        }
+
+        return () => clearInterval(pollInterval);
     }, [router]);
 
     const fetchCategories = async () => {
