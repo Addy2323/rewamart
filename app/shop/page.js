@@ -22,19 +22,6 @@ import { createInvestment } from '../../lib/investments';
 import { createWithdrawal } from '../../lib/withdrawals';
 import CashbackAllocationModal from '../../components/CashbackAllocationModal';
 
-// SEO Metadata for Shop Page
-export const metadata = {
-    title: 'Shop Products',
-    description: 'Browse our wide selection of quality products with cashback rewards. Find electronics, fashion, home goods, beauty products, and more. Get up to 10% cashback on every purchase in Tanzania.',
-    keywords: 'shop online Tanzania, buy products Tanzania, online store, electronics Tanzania, fashion Tanzania, beauty products, home goods, cashback rewards',
-    openGraph: {
-        title: 'Shop Products - RewaMart',
-        description: 'Browse our wide selection of quality products with cashback rewards',
-        url: 'https://www.rewamart.co.tz/shop',
-        type: 'website',
-    },
-};
-
 // Dynamic import for LocationPicker (client-side only due to Leaflet)
 const LocationPicker = dynamic(() => import('../../components/LocationPicker'), {
     ssr: false,

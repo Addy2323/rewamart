@@ -3,19 +3,6 @@
 import { useState } from 'react';
 import { Search, Package, RefreshCw, CreditCard, User, Shield, MessageCircle, Phone, Mail, ChevronDown, ChevronUp } from 'lucide-react';
 
-// SEO Metadata for Contact/Customer Service Page
-export const metadata = {
-    title: 'Customer Service & Support',
-    description: 'Get help with your RewaMart orders, returns, payments, and account. Contact our customer service team via chat, phone, or email. Based in Dar es Salaam, Tanzania.',
-    keywords: 'RewaMart support, customer service Tanzania, help center, contact RewaMart, Dar es Salaam customer service, order tracking, returns help',
-    openGraph: {
-        title: 'Customer Service - RewaMart',
-        description: 'Get help with orders, returns, and account questions',
-        url: 'https://www.rewamart.co.tz/contact',
-        type: 'website',
-    },
-};
-
 export default function CustomerServicePage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedFaq, setExpandedFaq] = useState(null);

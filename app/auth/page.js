@@ -7,16 +7,6 @@ import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff } from 'lucide-react';
 import { loginUser, registerUser } from '../../lib/auth';
 import Toast from '../../components/Toast';
 
-// SEO Metadata for Auth Page - Prevent indexing of login/register pages
-export const metadata = {
-    title: 'Login / Register',
-    description: 'Sign in to your RewaMart account or create a new account to start shopping and earning cashback rewards.',
-    robots: {
-        index: false,
-        follow: true,
-    },
-};
-
 export default function AuthPage() {
     const router = useRouter();
     const [isLogin, setIsLogin] = useState(true);
