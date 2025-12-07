@@ -9,6 +9,19 @@ import { getWallet } from '../../lib/wallet';
 import { getCurrentUser } from '../../lib/auth';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 
+// SEO Metadata for Invest Page
+export const metadata = {
+    title: 'Invest Your Money',
+    description: 'Invest your cashback and grow your wealth with RewaMart. Access UTT Unit Trusts, government bonds, stocks, and M-Wekeza. Start investing from as little as TZS 10,000.',
+    keywords: 'invest Tanzania, UTT unit trusts, investment opportunities Tanzania, stocks Tanzania, bonds Tanzania, M-Wekeza, financial growth, wealth building',
+    openGraph: {
+        title: 'Invest Your Money - RewaMart',
+        description: 'Grow your wealth with investment opportunities in Tanzania',
+        url: 'https://www.rewamart.co.tz/invest',
+        type: 'website',
+    },
+};
+
 export default function InvestPage() {
     const [activeTab, setActiveTab] = useState('all');
     const [selectedType, setSelectedType] = useState(null);

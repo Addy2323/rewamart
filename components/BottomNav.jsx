@@ -16,6 +16,11 @@ export default function BottomNav() {
         { href: '/profile', label: 'Profile', icon: User },
     ];
 
+    // Don't show bottom nav on auth page
+    if (pathname === '/auth') {
+        return null;
+    }
+
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-safe z-50 transition-colors">
             <div className="max-w-md mx-auto flex justify-around items-center h-16">

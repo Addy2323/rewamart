@@ -22,6 +22,19 @@ import { createInvestment } from '../../lib/investments';
 import { createWithdrawal } from '../../lib/withdrawals';
 import CashbackAllocationModal from '../../components/CashbackAllocationModal';
 
+// SEO Metadata for Shop Page
+export const metadata = {
+    title: 'Shop Products',
+    description: 'Browse our wide selection of quality products with cashback rewards. Find electronics, fashion, home goods, beauty products, and more. Get up to 10% cashback on every purchase in Tanzania.',
+    keywords: 'shop online Tanzania, buy products Tanzania, online store, electronics Tanzania, fashion Tanzania, beauty products, home goods, cashback rewards',
+    openGraph: {
+        title: 'Shop Products - RewaMart',
+        description: 'Browse our wide selection of quality products with cashback rewards',
+        url: 'https://www.rewamart.co.tz/shop',
+        type: 'website',
+    },
+};
+
 // Dynamic import for LocationPicker (client-side only due to Leaflet)
 const LocationPicker = dynamic(() => import('../../components/LocationPicker'), {
     ssr: false,
@@ -282,6 +295,19 @@ export default function ShopPage() {
     const potentialCashback = cart.reduce((sum, item) => sum + (item.price * item.cashback), 0);
 
     const handleCheckout = async () => {
+        // Check if user is authenticated
+        if (!user || !user.id) {
+            setToast({
+                type: 'error',
+                message: 'Please create an account or sign in so as to keep track of your product'
+            });
+            // Redirect to auth page after showing message
+            setTimeout(() => {
+                router.push('/auth');
+            }, 2000);
+            return;
+        }
+
         // Validate payment method selection
         if (!paymentMethod) {
             setToast({ type: 'error', message: 'Please select a payment method' });
@@ -815,6 +841,31 @@ export default function ShopPage() {
                                     <span className="text-emerald-600">TZS {finalTotal.toLocaleString()}</span>
                                 </div>
                             </div>
+
+                            {/* Authentication Warning */}
+                            {!user && (
+                                <div className="p-4 bg-amber-50 dark:bg-amber-900/30 border-l-4 border-amber-500 rounded-lg space-y-2">
+                                    <div className="flex items-start space-x-2">
+                                        <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                                                Authentication Required
+                                            </p>
+                                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                                You need to create an account or sign in to track your orders and earn cashback.
+                                            </p>
+                                            <button
+                                                onClick={() => router.push('/auth')}
+                                                className="mt-2 text-xs font-semibold text-amber-800 dark:text-amber-200 underline hover:text-amber-900 dark:hover:text-amber-100"
+                                            >
+                                                Sign In or Register →
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <button
                                 onClick={handleCheckout}

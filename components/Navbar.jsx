@@ -26,6 +26,11 @@ export default function Navbar() {
         { name: 'Best Sales', href: '/best-sellers' },
     ];
 
+    // Don't show navbar on auth page
+    if (pathname === '/auth') {
+        return null;
+    }
+
     return (
         <header className="bg-[#047857] text-white sticky top-0 z-50 shadow-md">
             {/* Top Row: Logo & User Actions */}

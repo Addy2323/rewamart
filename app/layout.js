@@ -7,12 +7,86 @@ import AppWrapper from '../components/AppWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
+// Comprehensive SEO Metadata
 export const metadata = {
-    title: 'RewaMart - Shop, Earn, Invest',
-    description: 'Tanzania\'s premier shopping and investment platform',
+    metadataBase: new URL('https://www.rewamart.co.tz'),
+    title: {
+        default: 'RewaMart - Shop, Earn, Invest | Tanzania E-Commerce Platform',
+        template: '%s | RewaMart'
+    },
+    description: "Tanzania's premier e-commerce and investment platform. Shop quality products, earn cashback rewards, and invest for your future growth. Join thousands of Tanzanians building wealth through smart shopping.",
+    keywords: [
+        'online shopping Tanzania',
+        'e-commerce Tanzania',
+        'cashback shopping',
+        'investment platform',
+        'RewaMart',
+        'Dar es Salaam shopping',
+        'earn money shopping',
+        'referral rewards',
+        'Tanzania marketplace',
+        'buy online Tanzania',
+        'online store Tanzania',
+        'shopping deals Tanzania'
+    ],
+    authors: [{ name: 'RewaMart' }],
+    creator: 'RewaMart',
+    publisher: 'RewaMart',
+    formatDetection: {
+        email: false,
+        address: false,
+        telephone: false,
+    },
     manifest: '/manifest.json',
-    themeColor: '#9333ea',
-    viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
+    themeColor: '#10b981',
+    viewport: {
+        width: 'device-width',
+        initialScale: 1,
+        maximumScale: 1,
+        userScalable: false,
+    },
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+        },
+    },
+    openGraph: {
+        type: 'website',
+        locale: 'en_TZ',
+        url: 'https://www.rewamart.co.tz',
+        siteName: 'RewaMart',
+        title: 'RewaMart - Shop, Earn, Invest | Tanzania E-Commerce Platform',
+        description: "Tanzania's premier e-commerce and investment platform. Shop quality products, earn cashback rewards, and invest for your future.",
+        images: [
+            {
+                url: '/images/og-image.png',
+                width: 1200,
+                height: 630,
+                alt: 'RewaMart - Shop, Earn, Invest',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'RewaMart - Shop, Earn, Invest',
+        description: "Tanzania's premier e-commerce and investment platform",
+        images: ['/images/og-image.png'],
+        creator: '@rewamart',
+    },
+    alternates: {
+        canonical: 'https://www.rewamart.co.tz',
+    },
+    verification: {
+        // Add your verification codes here after setting up:
+        // google: 'your-google-site-verification-code',
+        // bing: 'your-bing-verification-code',
+    },
 };
 
 export default function RootLayout({ children }) {

@@ -9,6 +9,19 @@ import { getWallet, getTransactions } from '../lib/wallet';
 import { getReferralData } from '../lib/referrals';
 import { isAuthenticated } from '../lib/auth';
 
+// SEO Metadata for Homepage
+export const metadata = {
+    title: 'Home',
+    description: "Welcome to RewaMart - Tanzania's premier e-commerce and investment platform. Shop quality products, earn cashback rewards, and invest for your future growth.",
+    keywords: 'RewaMart home, online shopping Tanzania, cashback shopping, investment platform Tanzania, e-commerce Dar es Salaam',
+    openGraph: {
+        title: 'RewaMart - Shop, Earn, Invest',
+        description: "Tanzania's premier e-commerce and investment platform",
+        url: 'https://www.rewamart.co.tz',
+        type: 'website',
+    },
+};
+
 export default function Dashboard() {
     const [wallet, setWallet] = useState(null);
     const [transactions, setTransactions] = useState([]);

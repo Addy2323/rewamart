@@ -7,6 +7,16 @@ import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff } from 'lucide-react';
 import { loginUser, registerUser } from '../../lib/auth';
 import Toast from '../../components/Toast';
 
+// SEO Metadata for Auth Page - Prevent indexing of login/register pages
+export const metadata = {
+    title: 'Login / Register',
+    description: 'Sign in to your RewaMart account or create a new account to start shopping and earning cashback rewards.',
+    robots: {
+        index: false,
+        follow: true,
+    },
+};
+
 export default function AuthPage() {
     const router = useRouter();
     const [isLogin, setIsLogin] = useState(true);
@@ -99,10 +109,7 @@ export default function AuthPage() {
     };
 
     return (
-        <div
-            // className="min-h-screen bg-cover bg-center flex items-center justify-center p-4"
-            // style={{ backgroundImage: "url('/images/image2.png')" }}
-        >
+        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-8">
