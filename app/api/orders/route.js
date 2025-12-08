@@ -14,8 +14,30 @@ export const GET = apiHandler(async (request) => {
     const skip = (page - 1) * limit;
 
     const isAdmin = authResult.user.role === 'admin';
+    const isVendor = authResult.user.role === 'vendor';
 
-    const where = isAdmin ? {} : { userId: authResult.user.id };
+    let where = {};
+    if (isAdmin) {
+        where = {};
+    } else if (isVendor) {
+        // Vendor sees orders they placed OR orders containing their products
+        where = {
+            OR: [
+                { userId: authResult.user.id },
+                {
+                    items: {
+                        some: {
+                            product: {
+                                vendor: authResult.user.name
+                            }
+                        }
+                    }
+                }
+            ]
+        };
+    } else {
+        where = { userId: authResult.user.id };
+    }
 
     const [orders, total] = await Promise.all([
         prisma.order.findMany({
@@ -29,6 +51,7 @@ export const GET = apiHandler(async (request) => {
                                 name: true,
                                 image: true,
                                 price: true,
+                                vendor: true,
                             },
                         },
                     },

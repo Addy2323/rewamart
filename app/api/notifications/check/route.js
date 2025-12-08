@@ -38,12 +38,20 @@ export const GET = apiHandler(async (request) => {
         const newOrders = await prisma.order.findMany({
             where: {
                 createdAt: { gt: sinceDate },
-                product: {
-                    vendor: user.name
+                items: {
+                    some: {
+                        product: {
+                            vendor: user.name
+                        }
+                    }
                 }
             },
             include: {
-                product: { select: { name: true } }
+                items: {
+                    include: {
+                        product: { select: { name: true } }
+                    }
+                }
             },
             orderBy: { createdAt: 'desc' },
             take: 1
@@ -55,7 +63,7 @@ export const GET = apiHandler(async (request) => {
                 count: newOrders.length, // Note: This is just 1 because of take: 1, but sufficient for notification
                 latestItem: {
                     type: 'order',
-                    message: `New order for ${newOrders[0].product.name}`,
+                    message: `New order for ${newOrders[0].items[0].product.name}`,
                     timestamp: newOrders[0].createdAt
                 }
             };

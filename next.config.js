@@ -19,6 +19,10 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'placehold.co',
             },
+            {
+                protocol: 'https',
+                hostname: 'global2019-static-cdn.kikuu.com',
+            },
         ],
     },
     env: {

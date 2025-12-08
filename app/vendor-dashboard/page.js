@@ -58,10 +58,13 @@ export default function VendorDashboard() {
         setUser(currentUser);
 
         // Load vendor profile
-        const userData = getUserById(currentUser.id);
-        if (userData?.profile) {
-            setProfile(userData.profile);
-        }
+        const loadProfile = async () => {
+            const userData = await getUserById(currentUser.id);
+            if (userData?.profile) {
+                setProfile(userData.profile);
+            }
+        };
+        loadProfile();
 
         // Fetch vendor products from API
         fetchVendorProducts(currentUser);
@@ -570,17 +573,17 @@ export default function VendorDashboard() {
                                     {vendorOrders.map(order => (
                                         <tr key={order.id} className="hover:bg-gray-50">
                                             <td className="px-4 py-3 text-gray-600 font-mono text-xs">
-                                                {order.id.substring(0, 12)}...
+                                                {order.id.toString().substring(0, 12)}...
                                             </td>
                                             <td className="px-4 py-3 text-gray-900">
                                                 <p className="font-medium">{order.userName}</p>
                                                 <p className="text-xs text-gray-500">{order.userEmail}</p>
                                             </td>
                                             <td className="px-4 py-3 text-gray-900">
-                                                <p className="font-medium">{order.product.name}</p>
+                                                <p className="font-medium">{order.items?.[0]?.product?.name || 'Unknown Product'}</p>
                                             </td>
                                             <td className="px-4 py-3 text-right font-semibold text-blue-600">
-                                                TZS {(order.productPrice || order.product.price).toLocaleString()}
+                                                TZS {(order.items?.[0]?.product?.price || 0).toLocaleString()}
                                             </td>
                                             <td className="px-4 py-3 text-right font-semibold text-purple-600">
                                                 TZS {(order.deliveryCost || 0).toLocaleString()}

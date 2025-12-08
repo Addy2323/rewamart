@@ -50,7 +50,7 @@ export default function UserDashboard() {
             setTotalWithdrawn(withdrawn);
 
             // Load user profile
-            const userData = getUserById(currentUser.id);
+            const userData = await getUserById(currentUser.id);
             if (userData?.profile) {
                 setProfile(userData.profile);
             }
@@ -314,7 +314,7 @@ export default function UserDashboard() {
                                         {/* Order Header */}
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
-                                                <h4 className="font-bold text-gray-900">Order #{order.id.slice(-8).toUpperCase()}</h4>
+                                                <h4 className="font-bold text-gray-900">Order #{order.id.toString().slice(-8).toUpperCase()}</h4>
                                                 <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                                             </div>
                                             <div className="text-right">
@@ -330,11 +330,19 @@ export default function UserDashboard() {
                                         {/* Product Info */}
                                         <div className="flex items-center space-x-3 mb-3 pb-3 border-b border-gray-100">
                                             <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                                <img src={order.product.image} alt={order.product.name} className="w-full h-full object-cover" />
+                                                <img
+                                                    src={order.items?.[0]?.product?.image || '/placeholder.png'}
+                                                    alt={order.items?.[0]?.product?.name || 'Product'}
+                                                    className="w-full h-full object-cover"
+                                                />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-gray-900 text-sm truncate">{order.product.name}</p>
-                                                <p className="text-xs text-gray-500">{order.product.vendor}</p>
+                                                <p className="font-medium text-gray-900 text-sm truncate">
+                                                    {order.items?.[0]?.product?.name || 'Unknown Product'}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    {order.items?.[0]?.product?.vendor || 'RewaMart'}
+                                                </p>
                                             </div>
                                         </div>
 

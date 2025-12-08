@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, Truck, Trash2, ArrowLeft, Search, Filter, CheckCircle, XCircle, Clock, Package, MapPin, Phone } from 'lucide-react';
-import { storage, STORAGE_KEYS } from '../../lib/storage';
-import { getOrderStatusLabel, getOrderStatusColor, ORDER_STATUS, updateOrderStatus } from '../../lib/orders';
+import { getCurrentUser } from '../../lib/auth';
+import { getOrderStatusLabel, getOrderStatusColor, ORDER_STATUS, updateOrderStatus, getOrdersByVendor, getAllOrders } from '../../lib/orders';
 import Image from 'next/image';
 
 export default function CustomerOrdersPage() {
@@ -30,8 +30,19 @@ export default function CustomerOrdersPage() {
         applyFilters();
     }, [searchQuery, filterStatus, orders]);
 
-    const loadOrders = () => {
-        const allOrders = storage.get(STORAGE_KEYS.ORDERS, []);
+    const loadOrders = async () => {
+        const user = getCurrentUser();
+        if (!user) {
+            router.push('/auth');
+            return;
+        }
+
+        let allOrders = [];
+        if (user.role === 'admin') {
+            allOrders = await getAllOrders();
+        } else if (user.role === 'vendor') {
+            allOrders = await getOrdersByVendor(user.name);
+        }
 
         // Calculate stats
         const total = allOrders.length;
@@ -51,10 +62,9 @@ export default function CustomerOrdersPage() {
         // Search filter
         if (searchQuery) {
             filtered = filtered.filter(o =>
-                o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                o.product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (o.deliveryInfo?.phone || '').includes(searchQuery) ||
-                (o.deliveryInfo?.address || '').toLowerCase().includes(searchQuery.toLowerCase())
+                o.id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+                o.items?.[0]?.product?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (o.deliveryAddress || '').toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
 
@@ -69,21 +79,28 @@ export default function CustomerOrdersPage() {
         setFilteredOrders(filtered);
     };
 
-    const handleUpdateStatus = (orderId, newStatus) => {
-        const result = updateOrderStatus(orderId, newStatus);
-        if (result.success) {
+    const handleUpdateStatus = async (orderId, newStatus) => {
+        // Optimistic update
+        const previousOrders = [...orders];
+        const updatedOrders = orders.map(order =>
+            order.id === orderId ? { ...order, status: newStatus } : order
+        );
+        setOrders(updatedOrders);
+
+        // Call API
+        const result = await updateOrderStatus(orderId, newStatus);
+
+        if (!result.success) {
+            // Revert if failed
+            setOrders(previousOrders);
+            alert('Failed to update status');
+        } else {
+            // Refresh to get latest data (optional, but good for consistency)
             loadOrders();
         }
     };
 
-    const handleDeleteOrder = (orderId) => {
-        if (confirm('Are you sure you want to delete this order?')) {
-            const allOrders = storage.get(STORAGE_KEYS.ORDERS, []);
-            const updatedOrders = allOrders.filter(o => o.id !== orderId);
-            storage.set(STORAGE_KEYS.ORDERS, updatedOrders);
-            loadOrders();
-        }
-    };
+
 
     const getStatusActions = (order) => {
         const actions = [];
@@ -218,7 +235,7 @@ export default function CustomerOrdersPage() {
                                     <div className="flex-1">
                                         <div className="flex items-center space-x-3 mb-2">
                                             <h3 className="font-bold text-gray-900 dark:text-white">
-                                                Order #{order.id.slice(-8).toUpperCase()}
+                                                Order #{order.id.toString().slice(-8).toUpperCase()}
                                             </h3>
                                             <span className={`text-xs px-3 py-1 rounded-full font-medium ${getOrderStatusColor(order.status)}`}>
                                                 {getOrderStatusLabel(order.status)}
@@ -239,19 +256,19 @@ export default function CustomerOrdersPage() {
                                 <div className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg mb-4">
                                     <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-white">
                                         <Image
-                                            src={order.product.image}
-                                            alt={order.product.name}
+                                            src={order.items?.[0]?.product?.image || '/placeholder.png'}
+                                            alt={order.items?.[0]?.product?.name || 'Product'}
                                             fill
                                             className="object-cover"
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="font-bold text-gray-900 dark:text-white">{order.product.name}</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">{order.product.vendor}</p>
+                                        <p className="font-bold text-gray-900 dark:text-white">{order.items?.[0]?.product?.name || 'Unknown Product'}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{order.items?.[0]?.product?.vendor || 'Unknown Vendor'}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-gray-900 dark:text-white">
-                                            TZS {order.product.price.toLocaleString()}
+                                            TZS {(order.items?.[0]?.product?.price || 0).toLocaleString()}
                                         </p>
                                         {order.cashbackEarned > 0 && (
                                             <p className="text-xs text-green-600 dark:text-green-400">
@@ -262,7 +279,7 @@ export default function CustomerOrdersPage() {
                                 </div>
 
                                 {/* Delivery Info */}
-                                {order.deliveryInfo && (
+                                {order.deliveryAddress && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                         <div className="space-y-2">
                                             <div className="flex items-start space-x-2">
@@ -270,37 +287,10 @@ export default function CustomerOrdersPage() {
                                                 <div>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">Delivery Address</p>
                                                     <p className="text-sm text-gray-900 dark:text-white">
-                                                        {order.deliveryInfo.address || 'Not provided'}
-                                                    </p>
-                                                    {order.deliveryInfo.distance && (
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                            {order.deliveryInfo.distance.toFixed(1)} km away
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="flex items-start space-x-2">
-                                                <Phone size={16} className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                                                <div>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Phone Number</p>
-                                                    <p className="text-sm text-gray-900 dark:text-white">
-                                                        {order.deliveryInfo.phone || 'Not provided'}
+                                                        {order.deliveryAddress}
                                                     </p>
                                                 </div>
                                             </div>
-                                            {order.deliveryInfo.transport && (
-                                                <div className="flex items-start space-x-2">
-                                                    <Truck size={16} className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                                                    <div>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Delivery Method</p>
-                                                        <p className="text-sm text-gray-900 dark:text-white capitalize">
-                                                            {order.deliveryInfo.transport}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -324,13 +314,7 @@ export default function CustomerOrdersPage() {
                                             <span>{action.label}</span>
                                         </button>
                                     ))}
-                                    <button
-                                        onClick={() => handleDeleteOrder(order.id)}
-                                        className="flex items-center space-x-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-                                    >
-                                        <Trash2 size={16} />
-                                        <span>Delete</span>
-                                    </button>
+
                                 </div>
                             </div>
                         ))
