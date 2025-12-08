@@ -25,7 +25,7 @@ export const GET = apiHandler(async (request) => {
 
         // Get the vendor name for this user
         const user = await prisma.user.findUnique({
-            where: { id: userId },
+            where: { id: parseInt(userId) },
             select: { name: true, role: true }
         });
 
