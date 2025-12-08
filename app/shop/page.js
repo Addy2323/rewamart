@@ -451,7 +451,7 @@ export default function ShopPage() {
     return (
         <div className="pb-24 dark:bg-gray-900 transition-colors">
             {/* Header */}
-            <div className="bg-white dark:bg-gray-800 z-40 pb-2 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 sticky top-0 z-40 pb-2 shadow-sm">
                 <div className="p-4 space-y-4">
                     {/* Search */}
                     <div className="flex space-x-2">
