@@ -774,8 +774,9 @@ export default function ShopPage() {
                                     value={deliveryAddress}
                                     onChange={(e) => setDeliveryAddress(e.target.value)}
                                     placeholder="Enter your full delivery address (e.g., Street name, Area, City)..."
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all dark:text-white dark:placeholder-gray-400 resize-none"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all dark:text-white dark:placeholder-gray-400 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     rows={2}
+                                    disabled
                                 />
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                     Use the map for accurate location or type your address manually

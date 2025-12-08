@@ -5,7 +5,7 @@ import { INVESTMENT_PROVIDERS, UTT_AMISS_FUNDS } from '../lib/investments';
 export default function CashbackAllocationModal({ isOpen, onClose, amount, onInvest, onWithdraw }) {
     const [step, setStep] = useState('selection'); // selection, details, success
     const [choice, setChoice] = useState(null); // invest, withdraw
-    const [provider, setProvider] = useState(INVESTMENT_PROVIDERS.UTT_AMISS);
+    const [provider, setProvider] = useState(amount >= 10000 ? INVESTMENT_PROVIDERS.UTT_AMISS : INVESTMENT_PROVIDERS.M_WEKEZA);
     const [details, setDetails] = useState({
         phoneNumber: '',
         accountNumber: '',
@@ -32,38 +32,53 @@ export default function CashbackAllocationModal({ isOpen, onClose, amount, onInv
         setStep('success');
     };
 
-    const renderSelectionStep = () => (
-        <div className="space-y-6">
-            <div className="text-center">
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <TrendingUp className="text-emerald-600" size={32} />
+    const renderSelectionStep = () => {
+        const canInvest = amount >= 1000;
+
+        return (
+            <div className="space-y-6">
+                <div className="text-center">
+                    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <TrendingUp className="text-emerald-600" size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Payment Successful!</h3>
+                    <p className="text-gray-600 mt-2">You earned cashback of</p>
+                    <p className="text-3xl font-bold text-emerald-600 mt-1">TZS {amount.toLocaleString()}</p>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Payment Successful!</h3>
-                <p className="text-gray-600 mt-2">You earned cashback of</p>
-                <p className="text-3xl font-bold text-emerald-600 mt-1">TZS {amount.toLocaleString()}</p>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <button
-                    onClick={() => { setChoice('invest'); setStep('details'); }}
-                    className="p-4 border-2 border-emerald-100 rounded-xl hover:border-emerald-500 hover:bg-emerald-50 transition-all text-center group"
-                >
-                    <TrendingUp className="mx-auto mb-2 text-emerald-600 group-hover:scale-110 transition-transform" size={24} />
-                    <span className="font-bold text-gray-900 block">Invest</span>
-                    <span className="text-xs text-gray-500">Grow your money</span>
-                </button>
+                <div className="grid grid-cols-2 gap-4">
+                    <button
+                        onClick={() => { setChoice('invest'); setStep('details'); }}
+                        disabled={!canInvest}
+                        className={`p-4 border-2 rounded-xl transition-all text-center group ${canInvest
+                                ? 'border-emerald-100 hover:border-emerald-500 hover:bg-emerald-50 cursor-pointer'
+                                : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                            }`}
+                    >
+                        <TrendingUp className={`mx-auto mb-2 transition-transform ${canInvest ? 'text-emerald-600 group-hover:scale-110' : 'text-gray-400'}`} size={24} />
+                        <span className={`font-bold block ${canInvest ? 'text-gray-900' : 'text-gray-500'}`}>Invest</span>
+                        <span className="text-xs text-gray-500">
+                            {canInvest ? 'Grow your money' : 'Min. TZS 1,000'}
+                        </span>
+                    </button>
 
-                <button
-                    onClick={() => { setChoice('withdraw'); setStep('details'); }}
-                    className="p-4 border-2 border-blue-100 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group"
-                >
-                    <Wallet className="mx-auto mb-2 text-blue-600 group-hover:scale-110 transition-transform" size={24} />
-                    <span className="font-bold text-gray-900 block">Withdraw</span>
-                    <span className="text-xs text-gray-500">To mobile money</span>
-                </button>
+                    <button
+                        onClick={() => { setChoice('withdraw'); setStep('details'); }}
+                        className="p-4 border-2 border-blue-100 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group"
+                    >
+                        <Wallet className="mx-auto mb-2 text-blue-600 group-hover:scale-110 transition-transform" size={24} />
+                        <span className="font-bold text-gray-900 block">Withdraw</span>
+                        <span className="text-xs text-gray-500">To mobile money</span>
+                    </button>
+                </div>
+                {!canInvest && (
+                    <p className="text-xs text-center text-red-500">
+                        Investment is only available for cashback amounts of TZS 1,000 or more.
+                    </p>
+                )}
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderDetailsStep = () => (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -88,12 +103,18 @@ export default function CashbackAllocationModal({ isOpen, onClose, amount, onInv
                             <button
                                 type="button"
                                 onClick={() => setProvider(INVESTMENT_PROVIDERS.UTT_AMISS)}
-                                className={`py-2 px-3 rounded-lg text-sm font-medium border ${provider === INVESTMENT_PROVIDERS.UTT_AMISS
-                                    ? 'bg-emerald-600 text-white border-emerald-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                disabled={amount < 10000}
+                                className={`py-2 px-3 rounded-lg text-sm font-medium border relative ${provider === INVESTMENT_PROVIDERS.UTT_AMISS
+                                        ? 'bg-emerald-600 text-white border-emerald-600'
+                                        : amount < 10000
+                                            ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                     }`}
                             >
-                                UTT AMISS
+                                UTT AMIS
+                                {amount < 10000 && (
+                                    <span className="block text-[10px] font-normal mt-0.5">Min. 10,000</span>
+                                )}
                             </button>
                             <button
                                 type="button"
