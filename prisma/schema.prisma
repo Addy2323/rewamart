@@ -63,6 +63,7 @@ model Product {
   image        String
   categoryId   Int
   category     Category  @relation(fields: [categoryId], references: [id])
+  subcategory  String?   // NEW: for filtering by subcategory (Shoes, Dresses, Computers, etc.)
   inStock      Boolean   @default(true)
   stockCount   Int       @default(0)
   cashbackRate Float     @default(5.0) // percentage

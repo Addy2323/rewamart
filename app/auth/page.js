@@ -99,17 +99,46 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-            <div className="w-full max-w-md">
+        <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700">
+                {/* Animated gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/30 via-pink-500/20 to-orange-500/30 animate-pulse"></div>
+            </div>
+
+            {/* Animated Background Shapes */}
+            <div className="absolute inset-0 overflow-hidden">
+                {/* Large circle top-left */}
+                <div className="absolute -top-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-blob"></div>
+                {/* Medium circle top-right */}
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-emerald-300/20 rounded-full blur-2xl animate-blob animation-delay-2000"></div>
+                {/* Large circle bottom-right */}
+                <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-cyan-400/15 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+                {/* Small circle bottom-left */}
+                <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-teal-300/20 rounded-full blur-2xl animate-blob animation-delay-6000"></div>
+            </div>
+
+            {/* Floating particles */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/40 rounded-full animate-float"></div>
+                <div className="absolute top-1/3 right-1/3 w-3 h-3 bg-white/30 rounded-full animate-float animation-delay-2000"></div>
+                <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-white/40 rounded-full animate-float animation-delay-4000"></div>
+                <div className="absolute bottom-1/3 right-1/4 w-3 h-3 bg-white/30 rounded-full animate-float animation-delay-6000"></div>
+            </div>
+
+            {/* Content Container with Glassmorphism */}
+            <div className="relative z-10 w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <img src="/images/logo.png" alt="RewaMart Logo" className="w-24 h-24 mx-auto mb-4 object-contain" />
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white"></h1>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">Shop • Earn • Invest</p>
+                    <div className="inline-block p-4 bg-white/20 backdrop-blur-md rounded-3xl shadow-2xl mb-4">
+                        <img src="/images/logo.png" alt="RewaMart Logo" className="w-24 h-24 object-contain" />
+                    </div>
+                    <h1 className="text-4xl font-bold text-white drop-shadow-lg"></h1>
+                    <p className="text-white/90 text-lg mt-2 font-medium drop-shadow">Shop • Earn • Invest</p>
                 </div>
 
-                {/* Auth Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6">
+                {/* Auth Card with Glassmorphism */}
+                <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 space-y-6 border border-white/20">
                     {/* Tabs */}
                     <div className="flex space-x-4 border-b border-gray-200 dark:border-gray-700">
                         <button

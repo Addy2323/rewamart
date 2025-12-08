@@ -25,6 +25,9 @@ export default function InvestPage() {
     const [autoInvestEnabled, setAutoInvestEnabled] = useState(false);
     const [autoInvestPercentage, setAutoInvestPercentage] = useState(10);
     const [user, setUser] = useState(null);
+    const [paymentConfirmation, setPaymentConfirmation] = useState(null);
+    const [successDetails, setSuccessDetails] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const successStories = [
         { name: 'Sarah', location: 'Dar es Salaam', initial: 5000, final: 150000, years: 2 },
@@ -133,23 +136,69 @@ export default function InvestPage() {
             return;
         }
 
-        // Check funds
-        const totalCost = costPreview.total;
-        if (wallet.balance < totalCost) {
-            setToast({ type: 'error', message: `Insufficient funds. You need TZS ${totalCost.toLocaleString()}` });
-            return;
-        }
-
-        // Process transaction
-        // Backend handles deduction
-        const result = await createInvestment(user.id, investAmount, selectedType.id, {
-            fundId: selectedFund,
-            uttAccountNumber,
-            mPesaNumber
+        // Show payment confirmation modal (payment via mobile money)
+        setPaymentConfirmation({
+            phoneNumber: mPesaNumber || user.phone || '255XXXXXXXXX',
+            amount: costPreview.total,
+            investmentData: {
+                userId: user.id,
+                amount: investAmount,
+                typeId: selectedType.id,
+                metadata: {
+                    fundId: selectedFund,
+                    uttAccountNumber,
+                    mPesaNumber
+                }
+            }
         });
+    };
+
+
+    const handlePaymentConfirmed = async () => {
+        // Store investment details before clearing state
+        const investmentType = selectedType;
+        const investmentAmount = paymentConfirmation.amount;
+        const fundName = selectedFund ?
+            INVESTMENT_TYPES.utt.options.find(f => f.id === selectedFund)?.name :
+            null;
+        const accountNumber = uttAccountNumber;
+
+        // Show processing loader
+        setPaymentConfirmation(null);
+        setIsProcessing(true);
+
+        // Process transaction after user confirms payment on their phone
+        const result = await createInvestment(
+            paymentConfirmation.investmentData.userId,
+            paymentConfirmation.investmentData.amount,
+            paymentConfirmation.investmentData.typeId,
+            {
+                ...paymentConfirmation.investmentData.metadata,
+                investmentTypeName: investmentType.name,
+                investmentTypeId: investmentType.id
+            }
+        );
+
+        setIsProcessing(false);
 
         if (result.success) {
-            setToast({ type: 'success', message: 'Investment successful!' });
+            // Store metadata for portfolio display
+            if (result.data?.investment?.id) {
+                storage.set(`investment_meta_${result.data.investment.id}`, {
+                    type: investmentType.name,
+                    fundName: fundName,
+                    accountNumber: accountNumber
+                });
+            }
+
+            // Show detailed success modal
+            setSuccessDetails({
+                amount: investmentAmount,
+                type: investmentType,
+                fundName: fundName,
+                accountNumber: accountNumber
+            });
+
             setSelectedType(null);
             setAmount('');
             setUttAccountNumber('');
@@ -164,6 +213,10 @@ export default function InvestPage() {
         } else {
             setToast({ type: 'error', message: result.error || 'Investment failed' });
         }
+    };
+
+    const handlePaymentCancel = () => {
+        setPaymentConfirmation(null);
     };
 
     return (
@@ -252,18 +305,36 @@ export default function InvestPage() {
                 <div>
                     <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-4">Your Portfolio</h3>
                     <div className="space-y-3">
-                        {portfolio.map((inv) => (
-                            <div key={inv.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                                <div>
-                                    <h4 className="font-bold text-sm text-gray-800 dark:text-white">{inv.typeName}</h4>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(inv.date).toLocaleDateString()}</p>
+                        {portfolio.map((inv) => {
+                            // Determine investment type based on amount heuristics
+                            let displayName = 'Investment';
+                            if (inv.amount >= 10000) {
+                                displayName = 'UTT AMIS Investment';
+                            } else if (inv.amount >= 1000) {
+                                displayName = 'M-Wekeza Investment';
+                            }
+
+                            // Try to get details from localStorage
+                            const storedMeta = storage.get(`investment_meta_${inv.id}`);
+                            if (storedMeta) {
+                                displayName = storedMeta.fundName ?
+                                    `${storedMeta.type}: ${storedMeta.fundName}` :
+                                    storedMeta.type;
+                            }
+
+                            return (
+                                <div key={inv.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                                    <div>
+                                        <h4 className="font-bold text-sm text-gray-800 dark:text-white">{displayName}</h4>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(inv.startDate || inv.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-sm text-gray-800 dark:text-white">TZS {inv.amount.toLocaleString()}</p>
+                                        <p className="text-xs text-green-600 dark:text-green-400 font-medium">{inv.status}</p>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-sm text-gray-800 dark:text-white">TZS {inv.amount.toLocaleString()}</p>
-                                    <p className="text-xs text-green-600 dark:text-green-400 font-medium">{inv.status}</p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -379,6 +450,115 @@ export default function InvestPage() {
                     </form>
                 )}
             </Modal>
+
+            {/* Payment Confirmation Modal */}
+            {paymentConfirmation && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl animate-slide-up">
+                        {/* Info Icon */}
+                        <div className="flex justify-center mb-4">
+                            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                                <Info size={32} className="text-blue-600" />
+                            </div>
+                        </div>
+
+                        {/* Title */}
+                        <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                            Confirm Payment
+                        </h2>
+
+                        {/* Description */}
+                        <p className="text-gray-600 text-center mb-4">
+                            M-Pesa payment request sent to:
+                        </p>
+
+                        {/* Phone Number */}
+                        <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                            <p className="text-3xl font-bold text-green-600 text-center">
+                                {paymentConfirmation.phoneNumber}
+                            </p>
+                        </div>
+
+                        {/* Instructions */}
+                        <p className="text-gray-600 text-center text-sm mb-6">
+                            Please check your phone and enter your PIN to confirm the payment of{' '}
+                            <span className="font-bold text-green-600">
+                                TZS {paymentConfirmation.amount.toLocaleString()}
+                            </span>
+                        </p>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handlePaymentCancel}
+                                className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handlePaymentConfirmed}
+                                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors"
+                            >
+                                I've Confirmed
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Success Details Modal */}
+            {successDetails && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl animate-slide-up">
+                        {/* Success Icon */}
+                        <div className="flex justify-center mb-4">
+                            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+                                <CheckCircle size={48} className="text-green-600" />
+                            </div>
+                        </div>
+
+                        {/* Success Message */}
+                        <div className="text-center mb-6">
+                            <p className="text-gray-800 text-lg leading-relaxed">
+                                The amount of <span className="font-bold">TZS {successDetails.amount.toLocaleString()}</span> has been submitted for investment to{' '}
+                                <span className="font-bold">
+                                    {successDetails.type.id === 'utt' ? 'UTT AMIS' : 'M-Wekeza'}
+                                    {successDetails.fundName && `: ${successDetails.fundName}`}
+                                </span>
+                                {successDetails.accountNumber && (
+                                    <span> on account number <span className="font-bold">{successDetails.accountNumber}</span></span>
+                                )}
+                            </p>
+                        </div>
+
+                        {/* Confirmation Timeline */}
+                        <div className="bg-blue-50 rounded-xl p-4 mb-6">
+                            <p className="text-gray-700 text-center">
+                                Your amount for purchasing units will be confirmed to you within{' '}
+                                <span className="font-bold">3 working days</span>.
+                            </p>
+                        </div>
+
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setSuccessDetails(null)}
+                            className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors"
+                        >
+                            Done
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Processing Payment Loader */}
+            {isProcessing && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl px-8 py-6 shadow-2xl flex items-center space-x-4">
+                        <div className="w-6 h-6 border-3 border-gray-300 border-t-emerald-600 rounded-full animate-spin"></div>
+                        <span className="text-gray-800 font-medium">Processing payment...</span>
+                    </div>
+                </div>
+            )}
 
             {toast && (
                 <Toast

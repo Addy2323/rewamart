@@ -69,21 +69,13 @@ export const POST = apiHandler(async (request) => {
 
     const investAmount = parseFloat(amount);
 
-    if (investAmount < plan.minAmount) {
-        return errorResponse(`Minimum investment for ${plan.name} is ${plan.minAmount} TZS`, 400);
-    }
-
-    if (plan.maxAmount && investAmount > plan.maxAmount) {
-        return errorResponse(`Maximum investment for ${plan.name} is ${plan.maxAmount} TZS`, 400);
-    }
+    // Note: Minimum validation is handled on frontend for each investment type
+    // (UTT AMIS: 10,000 TZS, M-Wekeza: 1,000 TZS)
+    // Backend plan minimums are not enforced here
 
     const user = await prisma.user.findUnique({
         where: { id: authResult.user.id },
     });
-
-    if (user.walletBalance < investAmount) {
-        return errorResponse('Insufficient wallet balance', 400);
-    }
 
     const result = await prisma.$transaction(async (tx) => {
         // Calculate maturity date and expected return
@@ -100,35 +92,17 @@ export const POST = apiHandler(async (request) => {
                 currentValue: investAmount,
                 expectedReturn,
                 maturityDate,
+                status: 'active', // Mark as active immediately since payment is confirmed on frontend
             },
             include: {
                 plan: true,
             },
         });
 
-        // Deduct from wallet
-        const balanceBefore = user.walletBalance;
-        const balanceAfter = balanceBefore - investAmount;
+        // We no longer deduct from wallet or create a wallet transaction
+        // as payment is handled externally (mobile money)
 
-        await tx.user.update({
-            where: { id: authResult.user.id },
-            data: { walletBalance: balanceAfter },
-        });
-
-        // Record transaction
-        await tx.walletTransaction.create({
-            data: {
-                userId: authResult.user.id,
-                type: 'investment',
-                amount: -investAmount,
-                balanceBefore,
-                balanceAfter,
-                reference: investment.id.toString(),
-                description: `Investment in ${plan.name} plan`,
-            },
-        });
-
-        return { investment, newBalance: balanceAfter };
+        return { investment, newBalance: user.walletBalance };
     });
 
     return successResponse({

@@ -20,7 +20,9 @@ export default function Navbar() {
     const navItems = [
         { name: 'All', href: '/shop' },
         { name: 'Deals', href: '/shop?category=deals' },
-        { name: 'Invest', href: '/invest' },
+        { name: "Men's Clothes", href: '/mens-clothing' },
+        { name: "Women's Clothes", href: '/womens-clothing' },
+        { name: 'Electronics', href: '/electronics' },
         { name: 'New Releases', href: '/new-releases' },
         { name: 'Customer Service', href: '/contact' },
         { name: 'Best Sales', href: '/best-sellers' },
@@ -38,11 +40,11 @@ export default function Navbar() {
                 <Link href="/" className="flex items-center space-x-2">
                     <div className="relative w-24 h-8">
                         {/* Using text as logo placeholder if image doesn't fit well, or keep image */}
-                        <img
-                            src="/images/logo.png"
+                        {/* <img
+                            src=""
                             alt="RewaMart"
                             className="w-full h-full object-contain brightness-0 invert"
-                        />
+                        /> */}
                     </div>
                 </Link>
 
@@ -55,13 +57,13 @@ export default function Navbar() {
                         <User className="h-8 w-8 sm:hidden" />
                     </Link>
 
-                    <Link href="/cart" className="relative flex items-end">
+                    {/* <Link href="/cart" className="relative flex items-end">
                         <div className="relative">
                             <ShoppingBag size={28} />
                             <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
                         </div>
                         <span className="font-bold text-sm hidden sm:block mb-1 ml-1">Cart</span>
-                    </Link>
+                    </Link> */}
                 </div>
             </div>
 
@@ -87,10 +89,9 @@ export default function Navbar() {
             {/* Bottom Row: Secondary Nav */}
             <div className="bg-[#065f46] px-4 py-2 overflow-x-auto no-scrollbar">
                 <div className="max-w-6xl mx-auto flex items-center space-x-5 text-sm whitespace-nowrap">
-                    <button className="flex items-center space-x-1 font-bold">
-                        <Menu size={18} />
-                        <span>All</span>
-                    </button>
+                    {/* <button className="flex items-center space-x-1 font-bold">
+                        
+                    </button> */}
                     {navItems.map((item) => (
                         <Link
                             key={item.name}

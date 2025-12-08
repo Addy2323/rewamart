@@ -35,7 +35,16 @@ export default function VendorDashboard() {
         inStock: true,
         rating: '4.5',
         cashback: '0',
+        categoryId: '1',
+        subcategory: '',
     });
+
+    // Subcategory options based on selected category
+    const subcategoryOptions = {
+        "Men's Clothing": ['Shoes', 'Sneakers', 'Suits', 'Slip ons'],
+        "Women's Clothing": ['Dresses', 'Tops', 'Womens Suits', 'Bottom'],
+        'Electronics': ['Computers', 'Phones', 'Smartwatch'],
+    };
 
     useEffect(() => {
         const currentUser = getCurrentUser();
@@ -145,6 +154,7 @@ export default function VendorDashboard() {
                 rating: product.rating || '4.5',
                 cashback: product.cashbackRate || '0',
                 categoryId: product.categoryId || '1',
+                subcategory: product.subcategory || '',
             });
         } else {
             setEditingProduct(null);
@@ -158,6 +168,7 @@ export default function VendorDashboard() {
                 rating: '4.5',
                 cashback: '0',
                 categoryId: '1', // Default category
+                subcategory: '',
             });
         }
         setIsProductModalOpen(true);
@@ -184,6 +195,7 @@ export default function VendorDashboard() {
                 price: Number(formData.price),
                 cashbackRate: Number(formData.cashback) || 0,
                 categoryId: Number(formData.categoryId) || 1, // Ensure categoryId is a number
+                subcategory: formData.subcategory || null,
                 vendor: user.name, // Enforce vendor name
             };
 
@@ -507,6 +519,22 @@ export default function VendorDashboard() {
                                 {categories.map(cat => (
                                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                                 ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+                            <select
+                                name="subcategory"
+                                value={formData.subcategory}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                                <option value="">Select subcategory (optional)</option>
+                                {categories.find(c => c.id === Number(formData.categoryId))?.name &&
+                                    subcategoryOptions[categories.find(c => c.id === Number(formData.categoryId)).name]?.map(sub => (
+                                        <option key={sub} value={sub}>{sub}</option>
+                                    ))}
                             </select>
                         </div>
 

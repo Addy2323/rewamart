@@ -55,18 +55,126 @@ export default function SplashScreen({ onComplete }) {
 
             {/* Main Content */}
             <div className="relative z-10 flex flex-col items-center">
-                {/* Logo Container with Glow Effect */}
+                {/* Logo Container with Orbiting Loader */}
                 <div className={`relative transform transition-all duration-700 ${phase >= 1 ? 'scale-100 opacity-100' : 'scale-75 opacity-0'}`}>
+                    {/* Orbiting Wavy Circles */}
+                    <div className="absolute inset-0 wavy-orbit-container">
+                        <div className="wavy-orbit">
+                            <div className="orbit-circle orbit-1"></div>
+                            <div className="orbit-circle orbit-2"></div>
+                            <div className="orbit-circle orbit-3"></div>
+                            <div className="orbit-circle orbit-4"></div>
+                            <div className="orbit-circle orbit-5"></div>
+                        </div>
+                    </div>
+
                     {/* Glow Ring */}
                     <div className="absolute inset-0 bg-white/30 rounded-full blur-xl animate-pulse scale-150" />
 
                     {/* Logo Circle */}
-                    <div className="relative w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl animate-logo-bounce">
+                    <div className="relative w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl animate-logo-bounce z-10">
                         <div className="text-emerald-600 flex flex-col items-center">
                             <ShoppingBag size={40} strokeWidth={2.5} />
                             <span className="text-xs font-bold mt-1 tracking-wider">REWAMART</span>
                         </div>
                     </div>
+
+                    <style jsx>{`
+                        .wavy-orbit-container {
+                            width: 220px;
+                            height: 220px;
+                            left: 50%;
+                            top: 50%;
+                            transform: translate(-50%, -50%);
+                            pointer-events: none;
+                        }
+
+                        .wavy-orbit {
+                            position: relative;
+                            width: 100%;
+                            height: 100%;
+                            animation: rotate-orbit 8s linear infinite;
+                        }
+
+                        .orbit-circle {
+                            position: absolute;
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 50%;
+                            left: 50%;
+                            top: 50%;
+                            margin-left: -10px;
+                            margin-top: -10px;
+                            box-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+                            animation: wave-pulse 2s ease-in-out infinite;
+                        }
+
+                        .orbit-1 {
+                            background: linear-gradient(135deg, #10b981, #059669);
+                            transform: rotate(0deg) translateY(-100px);
+                            animation-delay: 0s;
+                        }
+
+                        .orbit-2 {
+                            background: linear-gradient(135deg, #14b8a6, #0d9488);
+                            transform: rotate(72deg) translateY(-100px);
+                            animation-delay: 0.2s;
+                        }
+
+                        .orbit-3 {
+                            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                            transform: rotate(144deg) translateY(-100px);
+                            animation-delay: 0.4s;
+                        }
+
+                        .orbit-4 {
+                            background: linear-gradient(135deg, #10b981, #14b8a6);
+                            transform: rotate(216deg) translateY(-100px);
+                            animation-delay: 0.6s;
+                        }
+
+                        .orbit-5 {
+                            background: linear-gradient(135deg, #34d399, #10b981);
+                            transform: rotate(288deg) translateY(-100px);
+                            animation-delay: 0.8s;
+                        }
+
+                        @keyframes rotate-orbit {
+                            0% {
+                                transform: rotate(0deg);
+                            }
+                            100% {
+                                transform: rotate(360deg);
+                            }
+                        }
+
+                        @keyframes wave-pulse {
+                            0%, 100% {
+                                transform: scale(1) rotate(var(--rotation)) translateY(-100px);
+                                opacity: 0.8;
+                            }
+                            50% {
+                                transform: scale(1.5) rotate(var(--rotation)) translateY(-100px);
+                                opacity: 1;
+                            }
+                        }
+
+                        .orbit-1 {
+                            --rotation: 0deg;
+                        }
+                        .orbit-2 {
+                            --rotation: 72deg;
+                        }
+                        .orbit-3 {
+                            --rotation: 144deg;
+                        }
+                        .orbit-4 {
+                            --rotation: 216deg;
+                        }
+                        .orbit-5 {
+                            --rotation: 288deg;
+                        }
+                    `}</style>
                 </div>
 
                 {/* Brand Name */}
@@ -79,8 +187,8 @@ export default function SplashScreen({ onComplete }) {
                     </p>
                 </div>
 
-                {/* Loading Progress Bar */}
-                <div className={`mt-12 w-64 transform transition-all duration-500 ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                {/* Progress Bar */}
+                <div className={`mt-8 w-64 transform transition-all duration-500 ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                     <div className="h-1.5 bg-white/30 rounded-full overflow-hidden backdrop-blur-sm">
                         <div
                             className="h-full bg-gradient-to-r from-yellow-300 via-white to-yellow-300 rounded-full transition-all duration-100 ease-out relative"
@@ -91,6 +199,13 @@ export default function SplashScreen({ onComplete }) {
                         </div>
                     </div>
                     <p className="text-center text-white/70 text-xs mt-3 font-medium">
+                        {progress}%
+                    </p>
+                </div>
+
+                {/* Loading Status */}
+                <div className={`mt-4 transform transition-all duration-500 ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                    <p className="text-center text-white/90 text-sm font-medium">
                         {progress < 30 && 'Connecting...'}
                         {progress >= 30 && progress < 60 && 'Loading your wallet...'}
                         {progress >= 60 && progress < 90 && 'Preparing dashboard...'}
