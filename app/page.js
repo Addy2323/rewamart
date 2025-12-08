@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, Heart, Package, Tag, Sparkles, ShoppingBag, Headphones, Smartphone, ShirtIcon } from 'lucide-react';
+import { Search, Heart, Package, Tag, Sparkles, ShoppingBag, Headphones, Smartphone, ShirtIcon, ShoppingCart } from 'lucide-react';
+import { storage, STORAGE_KEYS } from '../lib/storage';
+import Toast from '../components/Toast';
 
 export default function HomePage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [flashSaleTime, setFlashSaleTime] = useState({ hours: 12, minutes: 1, seconds: 24 });
     const [products, setProducts] = useState([]);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [cart, setCart] = useState([]);
+    const [toast, setToast] = useState(null);
 
     // Banner slides with Unsplash images
     const banners = [
@@ -84,6 +88,20 @@ export default function HomePage() {
 
         return () => clearInterval(slideTimer);
     }, [banners.length]);
+
+    // Load cart from storage
+    useEffect(() => {
+        const savedCart = storage.get(STORAGE_KEYS.CART, []);
+        setCart(savedCart);
+    }, []);
+
+    // Add to cart function
+    const addToCart = (product) => {
+        const newCart = [...cart, { ...product, cartId: Date.now() }];
+        setCart(newCart);
+        storage.set(STORAGE_KEYS.CART, newCart);
+        setToast({ type: 'success', message: `${product.name} added to cart!` });
+    };
 
     const features = [
         { icon: Heart, label: 'Wish List', color: 'bg-pink-100 text-pink-600', link: '/shop' },
@@ -205,7 +223,7 @@ export default function HomePage() {
                     {products.slice(0, 6).map((product) => (
                         <Link
                             key={product.id}
-                            href={`/shop/${product.id}`}
+                            href="/shop"
                             className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
                         >
                             <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
@@ -238,40 +256,46 @@ export default function HomePage() {
                         const ratings = [4.4, 4.2, 4.6, 4.5];
 
                         return (
-                            <Link
+                            <div
                                 key={product.id}
-                                href={`/shop/${product.id}`}
-                                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow relative"
+                                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow relative flex flex-col"
                             >
+                                {/* In Stock Badge */}
+                                <div className="p-3 pb-0">
+                                    <span className="text-emerald-600 dark:text-emerald-400 text-xs font-semibold">In Stock</span>
+                                </div>
+
                                 {/* Discount Badge */}
-                                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
                                     {discounts[index]}
                                 </div>
 
-                                {/* Product Image */}
-                                <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
-                                    {product.image ? (
-                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <ShoppingBag size={64} className="text-gray-300" />
-                                    )}
-                                </div>
+                                {/* Product Image - Clickable */}
+                                <Link href={`/shop/${product.id}`} className="block">
+                                    <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
+                                        {product.image ? (
+                                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <ShoppingBag size={64} className="text-gray-300" />
+                                        )}
+                                    </div>
+                                </Link>
 
                                 {/* Product Info */}
-                                <div className="p-3">
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
-                                        {product.name}
-                                    </p>
-                                    <p className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                                        {product.price.toLocaleString()} TSh
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                        {orders[index]}
-                                    </p>
+                                <div className="p-3 flex-1 flex flex-col">
+                                    <Link href={`/shop/${product.id}`} className="block">
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                                            {product.name}
+                                        </p>
+                                        <p className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                            {product.price.toLocaleString()} TSh
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                            {orders[index]}
+                                        </p>
 
-                                    {/* Rating & Wishlist */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-1">
+                                        {/* Rating */}
+                                        <div className="flex items-center space-x-1 mb-3">
                                             {[...Array(5)].map((_, i) => (
                                                 <span key={i} className={`text-xs ${i < Math.floor(ratings[index]) ? 'text-yellow-400' : 'text-gray-300'}`}>
                                                     ★
@@ -281,10 +305,21 @@ export default function HomePage() {
                                                 {ratings[index]}
                                             </span>
                                         </div>
-                                        <Heart size={18} className="text-gray-400 hover:text-red-500 cursor-pointer" />
-                                    </div>
+                                    </Link>
+
+                                    {/* Add Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            addToCart(product);
+                                        }}
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors"
+                                    >
+                                        <ShoppingCart size={18} />
+                                        <span>Add</span>
+                                    </button>
                                 </div>
-                            </Link>
+                            </div>
                         );
                     })}
                 </div>
@@ -300,40 +335,46 @@ export default function HomePage() {
                         const ratings = [4.7, 4.3, 4.8, 4.1];
 
                         return (
-                            <Link
+                            <div
                                 key={product.id}
-                                href={`/shop/${product.id}`}
-                                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow relative"
+                                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow relative flex flex-col"
                             >
+                                {/* In Stock Badge */}
+                                <div className="p-3 pb-0">
+                                    <span className="text-emerald-600 dark:text-emerald-400 text-xs font-semibold">In Stock</span>
+                                </div>
+
                                 {/* Discount Badge */}
-                                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
                                     {discounts[index]}
                                 </div>
 
-                                {/* Product Image */}
-                                <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
-                                    {product.image ? (
-                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <ShoppingBag size={64} className="text-gray-300" />
-                                    )}
-                                </div>
+                                {/* Product Image - Clickable */}
+                                <Link href={`/shop/${product.id}`} className="block">
+                                    <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
+                                        {product.image ? (
+                                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <ShoppingBag size={64} className="text-gray-300" />
+                                        )}
+                                    </div>
+                                </Link>
 
                                 {/* Product Info */}
-                                <div className="p-3">
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
-                                        {product.name}
-                                    </p>
-                                    <p className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                                        {product.price.toLocaleString()} TSh
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                        {orders[index]}
-                                    </p>
+                                <div className="p-3 flex-1 flex flex-col">
+                                    <Link href={`/shop/${product.id}`} className="block">
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                                            {product.name}
+                                        </p>
+                                        <p className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                            {product.price.toLocaleString()} TSh
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                            {orders[index]}
+                                        </p>
 
-                                    {/* Rating & Wishlist */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-1">
+                                        {/* Rating */}
+                                        <div className="flex items-center space-x-1 mb-3">
                                             {[...Array(5)].map((_, i) => (
                                                 <span key={i} className={`text-xs ${i < Math.floor(ratings[index]) ? 'text-yellow-400' : 'text-gray-300'}`}>
                                                     ★
@@ -343,10 +384,21 @@ export default function HomePage() {
                                                 {ratings[index]}
                                             </span>
                                         </div>
-                                        <Heart size={18} className="text-gray-400 hover:text-red-500 cursor-pointer" />
-                                    </div>
+                                    </Link>
+
+                                    {/* Add Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            addToCart(product);
+                                        }}
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors"
+                                    >
+                                        <ShoppingCart size={18} />
+                                        <span>Add</span>
+                                    </button>
                                 </div>
-                            </Link>
+                            </div>
                         );
                     })}
                 </div>
@@ -354,6 +406,15 @@ export default function HomePage() {
 
             {/* Bottom Padding for Nav */}
             <div className="h-24"></div>
+
+            {/* Toast Notification */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div >
     );
 }

@@ -143,7 +143,7 @@ export default function ShopPage() {
 
     useEffect(() => {
         // Get user from localStorage
-        const userData = JSON.parse(localStorage.getItem('user') || 'null');
+        const userData = storage.get(STORAGE_KEYS.USER);
         setUser(userData);
 
         // Fetch recommended products if user is logged in
