@@ -1,7 +1,6 @@
 'use client';
 
 import { ShoppingCart, QrCode, Star } from 'lucide-react';
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { getAverageRating, getProductReviews } from '../lib/reviews';
 
@@ -22,10 +21,9 @@ export default function ProductCard({ product, onAddToCart, onViewDetails, onQRC
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow flex flex-col h-full">
             {/* Product Image - Large */}
             <div className="relative w-full h-56 bg-gray-100 overflow-hidden">
-                <Image
+                <img
                     src={product.image}
                     alt={product.name}
-                    fill
                     className="w-full h-full object-cover"
                 />
                 {product.cashbackRate > 0 && (

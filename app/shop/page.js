@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, ShoppingCart, X, Filter, Star, MapPin, Scan, Smartphone, CreditCard, Truck, Bus, Lightbulb, Phone, Sparkles } from 'lucide-react';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import ProductCard from '../../components/ProductCard';
 import Modal from '../../components/Modal';
@@ -614,11 +613,10 @@ export default function ShopPage() {
                                 <div key={item.cartId} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                                     <div className="flex items-center space-x-3">
                                         <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                                            <Image
+                                            <img
                                                 src={item.image}
                                                 alt={item.name}
-                                                fill
-                                                className="object-cover"
+                                                className="w-full h-full object-cover"
                                             />
                                         </div>
                                         <div>
