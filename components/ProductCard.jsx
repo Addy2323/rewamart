@@ -31,6 +31,15 @@ export default function ProductCard({ product, onAddToCart, onViewDetails, onQRC
                         {product.cashbackRate}% Cashback
                     </span>
                 )}
+                {/* Stock Count Badge */}
+                {product.stockCount !== undefined && product.stockCount !== null && (
+                    <span className={`absolute top-4 left-4 text-white text-xs px-3 py-1 rounded-full font-bold ${product.stockCount === 0 ? 'bg-red-600' :
+                        product.stockCount <= 5 ? 'bg-orange-500' :
+                            'bg-blue-500'
+                        }`}>
+                        {product.stockCount === 0 ? 'Out of Stock' : `Only ${product.stockCount} left`}
+                    </span>
+                )}
             </div>
 
             {/* Content Section */}
@@ -85,12 +94,12 @@ export default function ProductCard({ product, onAddToCart, onViewDetails, onQRC
                 <div className="flex gap-2 mt-auto">
                     <button
                         onClick={() => onAddToCart(product)}
-                        disabled={!product.inStock}
-                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-bold text-sm transition-colors shadow-md active:scale-95 transform disabled:opacity-50"
-                        title="Add to cart"
+                        disabled={!product.inStock || product.stockCount === 0}
+                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-bold text-sm transition-colors shadow-md active:scale-95 transform disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={product.stockCount === 0 ? "Out of stock" : "Add to cart"}
                     >
                         <ShoppingCart size={18} />
-                        <span>Add</span>
+                        <span>{product.stockCount === 0 ? 'Out of Stock' : 'Add'}</span>
                     </button>
                     <button
                         onClick={() => onQRCode && onQRCode(product)}

@@ -50,8 +50,8 @@ export default function UserDashboard() {
                 setProfile(userData.profile);
             }
 
-            // Load orders from new order system
-            const userOrders = getOrdersByUser(currentUser.id);
+            // Load orders from API
+            const userOrders = await getOrdersByUser(currentUser.id);
             setOrders(userOrders);
 
             // Fetch recommended products
@@ -127,7 +127,7 @@ export default function UserDashboard() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             {/* Header */}
-            <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 sticky top-0 z-50 shadow-md">
+            <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 shadow-md">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
                     {/* <Link href="/shop" className="flex items-center space-x-3">
                         <img src="/images/logo.png" alt="RewaMart Logo" className="w-14 h-14 object-contain" />

@@ -338,15 +338,15 @@ export default function ShopPage() {
 
             if (paymentResult.success) {
                 // Create orders for each cart item
-                cart.forEach(product => {
-                    createOrder(product, paymentMethod, {
+                for (const product of cart) {
+                    await createOrder(product, paymentMethod, {
                         address: deliveryAddress,
                         phone: phoneNumber,
                         location: deliveryLocation,
                         distance: deliveryDistance,
                         transport: deliveryTransport
-                    });
-                });
+                    }, deliveryCost);
+                }
 
                 let referralMessage = '';
 

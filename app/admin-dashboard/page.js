@@ -64,7 +64,7 @@ export default function AdminDashboard() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 sticky top-0 z-50 shadow-md">
+            <header className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 shadow-md">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <Link href="/shop" className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">

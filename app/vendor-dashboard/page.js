@@ -9,6 +9,7 @@ import { productsAPI } from '../../lib/api';
 import Toast from '../../components/Toast';
 import Modal from '../../components/Modal';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
+import { getOrdersByVendor, getVendorStats, ORDER_STATUS } from '../../lib/orders';
 
 export default function VendorDashboard() {
     const router = useRouter();
@@ -21,6 +22,8 @@ export default function VendorDashboard() {
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [vendorStats, setVendorStats] = useState(null);
+    const [vendorOrders, setVendorOrders] = useState([]);
     const [profile, setProfile] = useState({
         phone: '',
         address: '',
@@ -153,6 +156,7 @@ export default function VendorDashboard() {
                 inStock: product.inStock ?? true,
                 rating: product.rating || '4.5',
                 cashback: product.cashbackRate || '0',
+                stockCount: product.stockCount || 0,
                 categoryId: product.categoryId || '1',
                 subcategory: product.subcategory || '',
             });
@@ -167,6 +171,7 @@ export default function VendorDashboard() {
                 inStock: true,
                 rating: '4.5',
                 cashback: '0',
+                stockCount: 0,
                 categoryId: '1', // Default category
                 subcategory: '',
             });
@@ -196,6 +201,8 @@ export default function VendorDashboard() {
                 cashbackRate: Number(formData.cashback) || 0,
                 categoryId: Number(formData.categoryId) || 1, // Ensure categoryId is a number
                 subcategory: formData.subcategory || null,
+                stockCount: Number(formData.stockCount) || 0,
+                inStock: Number(formData.stockCount) > 0 ? formData.inStock : false,
                 vendor: user.name, // Enforce vendor name
             };
 
@@ -244,10 +251,22 @@ export default function VendorDashboard() {
         return <div className="min-h-screen flex items-center justify-center text-gray-900 dark:text-white">Loading...</div>;
     }
 
-    const totalSales = products.reduce((sum, p) => sum + p.price, 0);
+    // Load vendor statistics from actual orders
+    useEffect(() => {
+        const loadVendorData = async () => {
+            if (user?.name) {
+                const stats = await getVendorStats(user.name);
+                setVendorStats(stats);
+                const orders = await getOrdersByVendor(user.name);
+                setVendorOrders(orders);
+            }
+        };
+        loadVendorData();
+    }, [user, products]);
+
     const totalProducts = products.length;
     const inStockProducts = products.filter(p => p.inStock).length;
-    const totalCashback = products.reduce((sum, p) => sum + (p.cashback || 0), 0);
+    const totalCashback = products.reduce((sum, p) => sum + (p.cashbackRate || 0), 0);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -267,7 +286,10 @@ export default function VendorDashboard() {
                             <div>
                                 <p className="text-gray-600 text-sm">Total Sales</p>
                                 <p className="text-2xl font-bold text-blue-600 mt-2">
-                                    TZS {totalSales.toLocaleString()}
+                                    TZS {(vendorStats?.totalSales || 0).toLocaleString()}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {vendorStats?.completedOrders || 0} orders completed
                                 </p>
                             </div>
                             <TrendingUp className="text-blue-600" size={32} />
@@ -429,7 +451,8 @@ export default function VendorDashboard() {
                                             </div>
                                             <div className="text-right ml-4">
                                                 <p className="font-bold text-blue-600">TZS {product.price.toLocaleString()}</p>
-                                                <p className="text-xs text-orange-600 font-medium mt-1">Cashback: {product.cashback || 0}%</p>
+                                                <p className="text-xs text-orange-600 font-medium mt-1">Cashback: {product.cashbackRate || 0}%</p>
+                                                <p className="text-xs text-gray-500 mt-1">Stock: {product.stockCount || 0} units</p>
                                                 <span className={`inline-block px-2 py-1 rounded text-xs font-medium mt-1 ${product.inStock
                                                     ? 'bg-green-100 text-green-700'
                                                     : 'bg-red-100 text-red-700'
@@ -486,6 +509,106 @@ export default function VendorDashboard() {
                         <h3 className="font-bold text-gray-900">Customers</h3>
                         <p className="text-sm text-gray-600 mt-1">Manage customer reviews</p>
                     </Link>
+                </div>
+
+                {/* Orders & Payments Section */}
+                <div className="bg-white rounded-xl shadow-md p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900">Orders & Payments</h3>
+                            <p className="text-sm text-gray-600">Track all customer orders and payment breakdown</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-gray-600">Total Revenue</p>
+                            <p className="text-lg font-bold text-emerald-600">
+                                TZS {(vendorStats?.totalRevenue || 0).toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Revenue Breakdown Stats */}
+                    <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="text-center">
+                            <p className="text-xs text-gray-600">Product Sales</p>
+                            <p className="text-lg font-bold text-blue-600">
+                                TZS {(vendorStats?.totalSales || 0).toLocaleString()}
+                            </p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-xs text-gray-600">Delivery Revenue</p>
+                            <p className="text-lg font-bold text-purple-600">
+                                TZS {(vendorStats?.totalDeliveryRevenue || 0).toLocaleString()}
+                            </p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-xs text-gray-600">Pending Orders</p>
+                            <p className="text-lg font-bold text-orange-600">
+                                {vendorOrders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Orders Table */}
+                    {vendorOrders.length > 0 ? (
+                        <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-100 sticky top-0">
+                                    <tr>
+                                        <th className="px-4 py-2 text-left text-gray-700">Order ID</th>
+                                        <th className="px-4 py-2 text-left text-gray-700">Customer</th>
+                                        <th className="px-4 py-2 text-left text-gray-700">Product</th>
+                                        <th className="px-4 py-2 text-right text-gray-700">Product Price</th>
+                                        <th className="px-4 py-2 text-right text-gray-700">Delivery</th>
+                                        <th className="px-4 py-2 text-right text-gray-700">Total</th>
+                                        <th className="px-4 py-2 text-center text-gray-700">Status</th>
+                                        <th className="px-4 py-2 text-left text-gray-700">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {vendorOrders.map(order => (
+                                        <tr key={order.id} className="hover:bg-gray-50">
+                                            <td className="px-4 py-3 text-gray-600 font-mono text-xs">
+                                                {order.id.substring(0, 12)}...
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-900">
+                                                <p className="font-medium">{order.userName}</p>
+                                                <p className="text-xs text-gray-500">{order.userEmail}</p>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-900">
+                                                <p className="font-medium">{order.product.name}</p>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-semibold text-blue-600">
+                                                TZS {(order.productPrice || order.product.price).toLocaleString()}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-semibold text-purple-600">
+                                                TZS {(order.deliveryCost || 0).toLocaleString()}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-bold text-emerald-600">
+                                                TZS {order.totalAmount.toLocaleString()}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                                    order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                        order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                                                            'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                    {order.status.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600 text-xs">
+                                                {new Date(order.createdAt).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500">
+                            <Package size={48} className="mx-auto mb-3 opacity-50" />
+                            <p>No orders yet</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Product Modal */}
@@ -580,6 +703,35 @@ export default function VendorDashboard() {
                             </div>
                         </div>
 
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Stock Count</label>
+                                <input
+                                    type="number"
+                                    name="stockCount"
+                                    value={formData.stockCount}
+                                    onChange={handleInputChange}
+                                    min="0"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="0"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Number of units available</p>
+                            </div>
+                            <div className="flex items-center pt-6">
+                                <input
+                                    type="checkbox"
+                                    name="inStock"
+                                    checked={formData.inStock}
+                                    onChange={handleInputChange}
+                                    className="w-4 h-4 rounded"
+                                    disabled={Number(formData.stockCount) === 0}
+                                />
+                                <label className="ml-2 text-sm font-medium text-gray-700">
+                                    In Stock {Number(formData.stockCount) === 0 && '(Set stock count first)'}
+                                </label>
+                            </div>
+                        </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea
@@ -614,17 +766,6 @@ export default function VendorDashboard() {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                 placeholder="Vendor name"
                             />
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                name="inStock"
-                                checked={formData.inStock}
-                                onChange={handleInputChange}
-                                className="w-4 h-4 rounded"
-                            />
-                            <label className="text-sm font-medium text-gray-700">In Stock</label>
                         </div>
 
                         <div className="flex gap-3 pt-4">
