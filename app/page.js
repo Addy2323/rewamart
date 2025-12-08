@@ -228,8 +228,132 @@ export default function HomePage() {
                 </div>
             </div>
 
+            {/* Today's Deal Section */}
+            <div className="px-4 mt-8">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Today's Deal</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {products.slice(0, 4).map((product, index) => {
+                        const discounts = ['-10%', '-11%', '-7%', '-15%'];
+                        const orders = ['68 orders', '16 orders', '268 orders', '142 orders'];
+                        const ratings = [4.4, 4.2, 4.6, 4.5];
+
+                        return (
+                            <Link
+                                key={product.id}
+                                href={`/shop/${product.id}`}
+                                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow relative"
+                            >
+                                {/* Discount Badge */}
+                                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                                    {discounts[index]}
+                                </div>
+
+                                {/* Product Image */}
+                                <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
+                                    {product.image ? (
+                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <ShoppingBag size={64} className="text-gray-300" />
+                                    )}
+                                </div>
+
+                                {/* Product Info */}
+                                <div className="p-3">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                                        {product.name}
+                                    </p>
+                                    <p className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                        {product.price.toLocaleString()} TSh
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                        {orders[index]}
+                                    </p>
+
+                                    {/* Rating & Wishlist */}
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <span key={i} className={`text-xs ${i < Math.floor(ratings[index]) ? 'text-yellow-400' : 'text-gray-300'}`}>
+                                                    ★
+                                                </span>
+                                            ))}
+                                            <span className="text-xs text-gray-600 dark:text-gray-400 ml-1">
+                                                {ratings[index]}
+                                            </span>
+                                        </div>
+                                        <Heart size={18} className="text-gray-400 hover:text-red-500 cursor-pointer" />
+                                    </div>
+                                </div>
+                            </Link>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Thumbs Up Items Section */}
+            <div className="px-4 mt-8">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Thumbs Up Items</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {products.slice(4, 8).map((product, index) => {
+                        const discounts = ['-12%', '-8%', '-20%', '-5%'];
+                        const orders = ['89 orders', '124 orders', '56 orders', '203 orders'];
+                        const ratings = [4.7, 4.3, 4.8, 4.1];
+
+                        return (
+                            <Link
+                                key={product.id}
+                                href={`/shop/${product.id}`}
+                                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow relative"
+                            >
+                                {/* Discount Badge */}
+                                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                                    {discounts[index]}
+                                </div>
+
+                                {/* Product Image */}
+                                <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center relative">
+                                    {product.image ? (
+                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <ShoppingBag size={64} className="text-gray-300" />
+                                    )}
+                                </div>
+
+                                {/* Product Info */}
+                                <div className="p-3">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                                        {product.name}
+                                    </p>
+                                    <p className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                        {product.price.toLocaleString()} TSh
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                        {orders[index]}
+                                    </p>
+
+                                    {/* Rating & Wishlist */}
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <span key={i} className={`text-xs ${i < Math.floor(ratings[index]) ? 'text-yellow-400' : 'text-gray-300'}`}>
+                                                    ★
+                                                </span>
+                                            ))}
+                                            <span className="text-xs text-gray-600 dark:text-gray-400 ml-1">
+                                                {ratings[index]}
+                                            </span>
+                                        </div>
+                                        <Heart size={18} className="text-gray-400 hover:text-red-500 cursor-pointer" />
+                                    </div>
+                                </div>
+                            </Link>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Bottom Padding for Nav */}
             <div className="h-24"></div>
-        </div>
+        </div >
     );
 }

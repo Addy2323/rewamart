@@ -57,6 +57,8 @@ export default function ShopPage() {
     const [isScanPayOpen, setIsScanPayOpen] = useState(false);
     const [isCashbackModalOpen, setIsCashbackModalOpen] = useState(false);
     const [earnedCashback, setEarnedCashback] = useState(0);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    const [orderSuccessOpen, setOrderSuccessOpen] = useState(false);
 
     // Shop location (Kariakoo, Dar es Salaam)
     const SHOP_LOCATION = {
@@ -327,10 +329,13 @@ export default function ShopPage() {
         }
 
         setIsCheckingOut(true);
+        setIsProcessingPayment(true);
 
         // Initiate STK Push Payment
         try {
             const paymentResult = await initiateSTKPush(phoneNumber, finalTotal);
+
+            setIsProcessingPayment(false);
 
             if (paymentResult.success) {
                 // Create orders for each cart item
@@ -373,15 +378,15 @@ export default function ShopPage() {
                 setDeliveryDistance(null);
                 // Keep phone number for next time
 
-                // Show success message
-                setToast({
-                    type: 'success',
-                    message: `Payment successful! Please allocate your cashback.`
-                });
+                // Show success modal
+                setOrderSuccessOpen(true);
 
-                // Open Cashback Allocation Modal
-                setEarnedCashback(potentialCashback);
-                setIsCashbackModalOpen(true);
+                // After 5 seconds, close success modal and open cashback modal
+                setTimeout(() => {
+                    setOrderSuccessOpen(false);
+                    setEarnedCashback(potentialCashback);
+                    setIsCashbackModalOpen(true);
+                }, 5000);
 
             } else {
                 setToast({ type: 'error', message: 'Payment failed. Please try again.' });
@@ -391,6 +396,7 @@ export default function ShopPage() {
             console.error('Checkout error:', error);
             setToast({ type: 'error', message: 'An error occurred during checkout.' });
             setIsCheckingOut(false);
+            setIsProcessingPayment(false);
         }
     };
 
@@ -1076,11 +1082,49 @@ export default function ShopPage() {
                         onClose={() => setIsScanPayOpen(false)}
                         onConfirmPayment={(product) => {
                             handleScanPayment(product);
-                            setIsScanPayOpen(false);
                         }}
                     />
                 )
             }
+
+            {/* Processing Payment Loader */}
+            {isProcessingPayment && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl px-8 py-6 shadow-2xl flex items-center space-x-4">
+                        <div className="w-8 h-8 border-4 border-gray-300 border-t-emerald-600 rounded-full animate-spin"></div>
+                        <span className="text-gray-800 dark:text-white text-lg font-medium">Processing payment...</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Order Success Modal */}
+            {orderSuccessOpen && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl max-w-md w-full">
+                        {/* Success Checkmark */}
+                        <div className="flex justify-center mb-6">
+                            <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                <svg className="w-12 h-12 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Success Message */}
+                        <div className="text-center space-y-4">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                Thank you for purchasing from RewaMart!
+                            </h2>
+                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                                Your order has been received successfully. You can track your product status from your dashboard.
+                            </p>
+                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                                Keep shopping, explore investment options, and don't forget to invite your friends to earn exciting bonuses!!!!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }
