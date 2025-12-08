@@ -126,16 +126,12 @@ export default function UserDashboard() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Header */}
+            {/* Header - positioned right after Navbar */}
             <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 shadow-md">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
-                    {/* <Link href="/shop" className="flex items-center space-x-3">
-                        <img src="/images/logo.png" alt="RewaMart Logo" className="w-14 h-14 object-contain" />
-                        <h1 className="font-bold text-lg">RewaMart</h1>
-                    </Link> */}
                     <button
                         onClick={handleLogout}
-                        className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
+                        className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors ml-auto"
                     >
                         <span>Logout</span>
                     </button>
