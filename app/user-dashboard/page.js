@@ -35,6 +35,11 @@ export default function UserDashboard() {
         }
         setUser(currentUser);
 
+        // This part of the useEffect should only run if currentUser is available
+        // The instruction seems to imply moving the `if (!currentUser) return;` inside the effect,
+        // but it's already handled by the early return above.
+        // The main change is the dependency array.
+
         const loadData = async () => {
             // Load investment stats
             const stats = await getInvestmentStats(currentUser.id);
@@ -100,7 +105,7 @@ export default function UserDashboard() {
         }
 
         return () => clearInterval(pollInterval);
-    }, [router]);
+    }, [currentUser?.id, router]); // Added currentUser?.id to dependencies, kept router as it's used for push
 
 
     const handleLogout = () => {

@@ -97,7 +97,7 @@ export default function VendorDashboard() {
         }
 
         return () => clearInterval(pollInterval);
-    }, [router]);
+    }, [currentUser, router]); // Added currentUser to dependencies
 
     const fetchCategories = async () => {
         try {

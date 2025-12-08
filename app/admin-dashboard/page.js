@@ -47,7 +47,7 @@ export default function AdminDashboard() {
         };
 
         loadDashboardData();
-    }, [router]);
+    }, [currentUser, router]); // Added currentUser to dependencies
 
     const handleLogout = () => {
         logoutUser();
