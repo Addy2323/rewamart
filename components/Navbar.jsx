@@ -17,6 +17,13 @@ export default function Navbar() {
         setUser(currentUser);
     }, []);
 
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            window.location.href = `/shop?search=${encodeURIComponent(searchQuery.trim())}`;
+        }
+    };
+
     const navItems = [
         { name: 'All', href: '/shop' },
         { name: 'Deals', href: '/shop?category=deals' },
@@ -69,7 +76,7 @@ export default function Navbar() {
 
             {/* Middle Row: Search Bar */}
             <div className="px-4 pb-3 max-w-6xl mx-auto">
-                <div className="flex bg-white rounded-lg overflow-hidden h-10 shadow-sm">
+                <form onSubmit={handleSearch} className="flex bg-white rounded-lg overflow-hidden h-10 shadow-sm">
                     <div className="bg-gray-100 px-3 flex items-center border-r border-gray-300 text-gray-600 text-xs font-medium cursor-pointer hover:bg-gray-200 transition-colors">
                         All <span className="ml-1">▼</span>
                     </div>
@@ -79,11 +86,19 @@ export default function Navbar() {
                         placeholder="Search RewaMart"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                handleSearch(e);
+                            }
+                        }}
                     />
-                    <button className="bg-orange-400 hover:bg-orange-500 px-4 flex items-center justify-center transition-colors">
+                    <button
+                        type="submit"
+                        className="bg-orange-400 hover:bg-orange-500 px-4 flex items-center justify-center transition-colors"
+                    >
                         <Search size={20} className="text-gray-900" />
                     </button>
-                </div>
+                </form>
             </div>
 
             {/* Bottom Row: Secondary Nav */}
