@@ -61,6 +61,7 @@ model Product {
   description  String    @db.Text
   price        Float
   image        String
+  images       String[]  @default([]) // NEW: for product gallery
   categoryId   Int
   category     Category  @relation(fields: [categoryId], references: [id])
   subcategory  String?   // NEW: for filtering by subcategory (Shoes, Dresses, Computers, etc.)

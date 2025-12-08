@@ -40,6 +40,7 @@ export default function VendorDashboard() {
         cashback: '0',
         categoryId: '1',
         subcategory: '',
+        images: [],
     });
 
     // Subcategory options based on selected category
@@ -175,6 +176,7 @@ export default function VendorDashboard() {
                 stockCount: product.stockCount || 0,
                 categoryId: product.categoryId || '1',
                 subcategory: product.subcategory || '',
+                images: product.images || [],
             });
         } else {
             setEditingProduct(null);
@@ -190,6 +192,7 @@ export default function VendorDashboard() {
                 stockCount: 0,
                 categoryId: '1', // Default category
                 subcategory: '',
+                images: [],
             });
         }
         setIsProductModalOpen(true);
@@ -750,15 +753,86 @@ export default function VendorDashboard() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                            <input
-                                type="url"
-                                name="image"
-                                value={formData.image}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="https://..."
-                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Product Images</label>
+
+                            {/* Main Image */}
+                            <div className="mb-3">
+                                <label className="text-xs text-gray-500 mb-1 block">Main Image URL</label>
+                                <input
+                                    type="url"
+                                    name="image"
+                                    value={formData.image}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="https://..."
+                                />
+                            </div>
+
+                            {/* Additional Images */}
+                            <div>
+                                <label className="text-xs text-gray-500 mb-1 block">Additional Images (Gallery)</label>
+                                <div className="flex gap-2 mb-2">
+                                    <input
+                                        type="url"
+                                        id="new-image-url"
+                                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="Add image URL"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                const url = e.target.value;
+                                                if (url) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        images: [...(prev.images || []), url]
+                                                    }));
+                                                    e.target.value = '';
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const input = document.getElementById('new-image-url');
+                                            const url = input.value;
+                                            if (url) {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    images: [...(prev.images || []), url]
+                                                }));
+                                                input.value = '';
+                                            }
+                                        }}
+                                        className="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+
+                                {/* Image Preview Grid */}
+                                {formData.images && formData.images.length > 0 && (
+                                    <div className="grid grid-cols-4 gap-2 mt-2">
+                                        {formData.images.map((img, index) => (
+                                            <div key={index} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                                                <img src={img} alt={`Gallery ${index}`} className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            images: prev.images.filter((_, i) => i !== index)
+                                                        }));
+                                                    }}
+                                                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div>

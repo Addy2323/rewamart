@@ -2,6 +2,7 @@
 
 import { ShoppingCart, QrCode, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { getAverageRating, getProductReviews } from '../lib/reviews';
 
 export default function ProductCard({ product, onAddToCart, onViewDetails, onQRCode }) {
@@ -20,27 +21,31 @@ export default function ProductCard({ product, onAddToCart, onViewDetails, onQRC
     return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow flex flex-col h-full">
             {/* Product Image - Large */}
-            <div className="relative w-full h-56 bg-gray-100 overflow-hidden">
+            <Link href={`/shop/${product.id}`} className="relative w-full h-56 bg-gray-100 overflow-hidden block cursor-pointer">
                 <img
                     src={product.image}
                     alt={product.name}
                     className="w-full h-full object-cover"
                 />
                 {product.cashbackRate > 0 && (
-                    <span className="absolute top-4 right-4 bg-emerald-500 text-white text-sm px-3 py-1 rounded-full font-bold">
+                    <span className={`absolute bg-emerald-500 text-white text-sm px-3 py-1 rounded-full font-bold z-10
+                        ${(product.stockCount !== undefined && product.stockCount !== null)
+                            ? 'top-12 left-4 md:top-4 md:right-4 md:left-auto'
+                            : 'top-4 right-4'
+                        }`}>
                         {product.cashbackRate}% Cashback
                     </span>
                 )}
                 {/* Stock Count Badge */}
                 {product.stockCount !== undefined && product.stockCount !== null && (
-                    <span className={`absolute top-4 left-4 text-white text-xs px-3 py-1 rounded-full font-bold ${product.stockCount === 0 ? 'bg-red-600' :
+                    <span className={`absolute top-4 left-4 text-white text-xs px-3 py-1 rounded-full font-bold z-10 ${product.stockCount === 0 ? 'bg-red-600' :
                         product.stockCount <= 5 ? 'bg-orange-500' :
                             'bg-blue-500'
                         }`}>
                         {product.stockCount === 0 ? 'Out of Stock' : `Only ${product.stockCount} left`}
                     </span>
                 )}
-            </div>
+            </Link>
 
             {/* Content Section */}
             <div className="p-4 flex flex-col flex-1">
