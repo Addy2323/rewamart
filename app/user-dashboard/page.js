@@ -105,7 +105,7 @@ export default function UserDashboard() {
         }
 
         return () => clearInterval(pollInterval);
-    }, [currentUser?.id, router]); // Added currentUser?.id to dependencies, kept router as it's used for push
+    }, []); // Run once on mount - currentUser is loaded inside the effect
 
 
     const handleLogout = () => {

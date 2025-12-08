@@ -47,7 +47,7 @@ export default function AdminDashboard() {
         };
 
         loadDashboardData();
-    }, [currentUser, router]); // Added currentUser to dependencies
+    }, []); // Run once on mount
 
     const handleLogout = () => {
         logoutUser();
