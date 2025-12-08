@@ -117,6 +117,19 @@ export default function VendorDashboard() {
         setFilteredProducts(filtered);
     }, [searchQuery, products]);
 
+    // Load vendor statistics from actual orders
+    useEffect(() => {
+        const loadVendorData = async () => {
+            if (user?.name) {
+                const stats = await getVendorStats(user.name);
+                setVendorStats(stats);
+                const orders = await getOrdersByVendor(user.name);
+                setVendorOrders(orders);
+            }
+        };
+        loadVendorData();
+    }, [user?.name]); // Only re-run when user.name changes, not products
+
     const fetchVendorProducts = async (currentUser) => {
         try {
             const vendorName = currentUser?.name || user?.name;
@@ -251,18 +264,7 @@ export default function VendorDashboard() {
         return <div className="min-h-screen flex items-center justify-center text-gray-900 dark:text-white">Loading...</div>;
     }
 
-    // Load vendor statistics from actual orders
-    useEffect(() => {
-        const loadVendorData = async () => {
-            if (user?.name) {
-                const stats = await getVendorStats(user.name);
-                setVendorStats(stats);
-                const orders = await getOrdersByVendor(user.name);
-                setVendorOrders(orders);
-            }
-        };
-        loadVendorData();
-    }, [user, products]);
+
 
     const totalProducts = products.length;
     const inStockProducts = products.filter(p => p.inStock).length;
