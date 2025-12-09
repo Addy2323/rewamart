@@ -19,6 +19,7 @@ import { processReferralReward, processReferralPurchase } from '../../lib/referr
 import { initiateSTKPush } from '../../lib/stkpush';
 import { createInvestment } from '../../lib/investments';
 import { createWithdrawal } from '../../lib/withdrawals';
+import { getCurrentUser } from '../../lib/auth';
 import CashbackAllocationModal from '../../components/CashbackAllocationModal';
 
 // Dynamic import for LocationPicker (client-side only due to Leaflet)
@@ -968,8 +969,17 @@ export default function ShopPage() {
                 isOpen={isCashbackModalOpen}
                 onClose={() => setIsCashbackModalOpen(false)}
                 amount={earnedCashback}
-                onInvest={handleInvestCashback}
-                onWithdraw={handleWithdrawCashback}
+                onAllocate={async ({ investAmount, withdrawAmount, investDetails, withdrawDetails }) => {
+                    if (investAmount > 0) {
+                        await handleInvestCashback(investAmount, investDetails.provider, investDetails);
+                    }
+                    if (withdrawAmount > 0) {
+                        await handleWithdrawCashback(withdrawAmount, withdrawDetails.phoneNumber);
+                    }
+                    // Refresh user data to reflect wallet changes
+                    const updatedUser = getCurrentUser();
+                    setUser(updatedUser);
+                }}
             />
 
             {/* Review Modal */}
