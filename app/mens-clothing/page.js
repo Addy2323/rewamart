@@ -25,9 +25,12 @@ export default function MensClothingPage() {
         const loadProducts = async () => {
             const allProducts = await getAllProducts();
             const mensProducts = allProducts.filter(p => {
-                const categoryStr = Array.isArray(p.category)
-                    ? p.category.join(' ').toLowerCase()
-                    : String(p.category || '').toLowerCase();
+                // Handle category which might be an object (from Prisma) or a string
+                const categoryName = p.category && typeof p.category === 'object'
+                    ? p.category.name
+                    : String(p.category || '');
+
+                const categoryStr = categoryName.toLowerCase();
                 const nameStr = String(p.name || '').toLowerCase();
 
                 return categoryStr.includes('men') ||
@@ -92,8 +95,8 @@ export default function MensClothingPage() {
                             key={sub.id}
                             onClick={() => handleSubcategoryClick(sub.id)}
                             className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeSubcategory === sub.id
-                                    ? 'bg-emerald-600 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                 }`}
                         >
                             {sub.name}
