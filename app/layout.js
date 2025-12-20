@@ -79,9 +79,7 @@ export const metadata = {
         images: ['/images/og-image.png'],
         creator: '@rewamart',
     },
-    alternates: {
-        canonical: 'https://www.rewamart.co.tz',
-    },
+
     verification: {
         // Add your verification codes here after setting up:
         // google: 'your-google-site-verification-code',

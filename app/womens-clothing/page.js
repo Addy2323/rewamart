@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Search, ShoppingCart } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
 import { getAllProducts } from '../../lib/products';
+import { storage, STORAGE_KEYS } from '../../lib/storage';
+import Toast from '../../components/Toast';
 
 export default function WomensClothingPage() {
     const router = useRouter();
@@ -12,6 +14,8 @@ export default function WomensClothingPage() {
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [activeSubcategory, setActiveSubcategory] = useState('all');
+    const [cart, setCart] = useState([]);
+    const [toast, setToast] = useState(null);
 
     const subcategories = [
         { id: 'all', name: 'All' },
@@ -63,6 +67,20 @@ export default function WomensClothingPage() {
         }
     }, [searchParams, products]);
 
+    // Load cart from storage
+    useEffect(() => {
+        const savedCart = storage.get(STORAGE_KEYS.CART, []);
+        setCart(savedCart);
+    }, []);
+
+    // Add to cart function
+    const addToCart = (product) => {
+        const newCart = [...cart, { ...product, cartId: Date.now() }];
+        setCart(newCart);
+        storage.set(STORAGE_KEYS.CART, newCart);
+        setToast({ type: 'success', message: 'Added to cart' });
+    };
+
     const handleSubcategoryClick = (subcategoryId) => {
         if (subcategoryId === 'all') {
             router.push('/womens-clothing');
@@ -113,7 +131,7 @@ export default function WomensClothingPage() {
                 {filteredProducts.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filteredProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} />
+                            <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
                         ))}
                     </div>
                 ) : (
@@ -124,6 +142,26 @@ export default function WomensClothingPage() {
                     </div>
                 )}
             </div>
+
+            {/* Floating Cart Button */}
+            {cart.length > 0 && (
+                <button
+                    onClick={() => router.push('/shop')}
+                    className="fixed bottom-20 right-4 bg-emerald-600 text-white p-4 rounded-full shadow-lg hover:bg-emerald-700 transition-transform hover:scale-105 active:scale-95 z-40 flex items-center space-x-2"
+                >
+                    <ShoppingCart size={24} />
+                    <span className="font-bold">{cart.length}</span>
+                </button>
+            )}
+
+            {/* Toast Notification */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div>
     );
 }
