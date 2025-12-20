@@ -300,7 +300,7 @@ export default function LocationPicker({
             {/* Map Container */}
             <div
                 ref={mapRef}
-                className="flex-1 w-full bg-gray-200 dark:bg-gray-700 min-h-[250px]"
+                className="flex-1 w-full bg-gray-200 dark:bg-gray-700 min-h-[150px]"
             />
 
             {/* Selected Location */}
