@@ -865,6 +865,7 @@ export default function ShopPage() {
             >
                 <div className="h-[60vh] w-full relative rounded-xl overflow-hidden">
                     <LocationPicker
+                        onClose={() => setIsLocationPickerOpen(false)}
                         onLocationSelect={(loc) => {
                             setDeliveryLocation(loc);
                             setDeliveryAddress(loc.address); // Auto-fill address

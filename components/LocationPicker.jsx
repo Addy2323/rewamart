@@ -7,11 +7,9 @@ import { MapPin, Search, X, Navigation, AlertTriangle } from 'lucide-react';
 let L = null;
 if (typeof window !== 'undefined') {
     L = require('leaflet');
-    require('leaflet/dist/leaflet.css');
 }
 
 export default function LocationPicker({
-    isOpen,
     onClose,
     onSelectLocation,
     initialLocation = null
@@ -87,7 +85,7 @@ export default function LocationPicker({
 
     // Initialize map
     useEffect(() => {
-        if (!isOpen || !L || mapInstanceRef.current) return;
+        if (!L || mapInstanceRef.current) return;
 
         // Wait for DOM to be ready
         const initTimer = setTimeout(() => {
@@ -167,7 +165,7 @@ export default function LocationPicker({
                 polylineRef.current = null;
             }
         };
-    }, [isOpen]);
+    }, []);
 
     // Reverse geocode to get address from coordinates
     const reverseGeocode = async (lat, lng) => {
@@ -265,104 +263,84 @@ export default function LocationPicker({
         onClose();
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl my-auto shadow-2xl flex flex-col max-h-[95vh]">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 flex-shrink-0">
-                    <div className="flex items-center space-x-2">
-                        <MapPin className="text-emerald-600" size={24} />
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                            Select Delivery Location
-                        </h2>
+        <div className="flex flex-col h-full w-full bg-white dark:bg-gray-800">
+            {/* Search Bar */}
+            <div className="p-4 border-b dark:border-gray-700 flex-shrink-0">
+                <div className="flex space-x-2">
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                            placeholder="Search in Tanzania..."
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-none rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm dark:text-white dark:placeholder-gray-400"
+                        />
                     </div>
                     <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                        onClick={handleSearch}
+                        disabled={isLoading}
+                        className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm"
                     >
-                        <X size={20} className="text-gray-500" />
-                    </button>
-                </div>
-
-                {/* Search Bar */}
-                <div className="p-4 border-b dark:border-gray-700 flex-shrink-0">
-                    <div className="flex space-x-2">
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                placeholder="Search in Tanzania..."
-                                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-none rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm dark:text-white dark:placeholder-gray-400"
-                            />
-                        </div>
-                        <button
-                            onClick={handleSearch}
-                            disabled={isLoading}
-                            className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm"
-                        >
-                            Search
-                        </button>
-                        <button
-                            onClick={getCurrentLocation}
-                            disabled={isLocating}
-                            className="p-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center"
-                            title="Use my current location"
-                        >
-                            <Navigation size={18} className={isLocating ? 'animate-pulse' : ''} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Map Container */}
-                <div
-                    ref={mapRef}
-                    className="h-[250px] w-full bg-gray-200 dark:bg-gray-700 flex-shrink-0"
-                />
-
-                {/* Selected Location */}
-                <div className="p-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
-                    {outsideTanzania && (
-                        <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg flex items-center space-x-2">
-                            <AlertTriangle size={16} className="text-red-600 dark:text-red-400 flex-shrink-0" />
-                            <p className="text-xs text-red-700 dark:text-red-300 font-medium">
-                                This location is outside Tanzania. Delivery only available in Tanzania.
-                            </p>
-                        </div>
-                    )}
-                    <div className="flex items-start space-x-2">
-                        <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center flex-shrink-0">
-                            <MapPin size={14} className="text-emerald-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Selected Location</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
-                                {isLoading ? 'Loading address...' : (selectedLocation.address || 'Click on the map to select a location')}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Actions */}
-                <div className="p-4 border-t dark:border-gray-700 flex space-x-3 flex-shrink-0 bg-white dark:bg-gray-800">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                        Cancel
+                        Search
                     </button>
                     <button
-                        onClick={handleConfirm}
-                        disabled={!selectedLocation.address || isLoading || outsideTanzania}
-                        className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        onClick={getCurrentLocation}
+                        disabled={isLocating}
+                        className="p-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center"
+                        title="Use my current location"
                     >
-                        Confirm Location
+                        <Navigation size={18} className={isLocating ? 'animate-pulse' : ''} />
                     </button>
                 </div>
+            </div>
+
+            {/* Map Container */}
+            <div
+                ref={mapRef}
+                className="flex-1 w-full bg-gray-200 dark:bg-gray-700 min-h-[250px]"
+            />
+
+            {/* Selected Location */}
+            <div className="p-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
+                {outsideTanzania && (
+                    <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg flex items-center space-x-2">
+                        <AlertTriangle size={16} className="text-red-600 dark:text-red-400 flex-shrink-0" />
+                        <p className="text-xs text-red-700 dark:text-red-300 font-medium">
+                            This location is outside Tanzania. Delivery only available in Tanzania.
+                        </p>
+                    </div>
+                )}
+                <div className="flex items-start space-x-2">
+                    <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center flex-shrink-0">
+                        <MapPin size={14} className="text-emerald-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Selected Location</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
+                            {isLoading ? 'Loading address...' : (selectedLocation.address || 'Click on the map to select a location')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div className="p-4 border-t dark:border-gray-700 flex space-x-3 flex-shrink-0 bg-white dark:bg-gray-800">
+                <button
+                    onClick={onClose}
+                    className="flex-1 px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={handleConfirm}
+                    disabled={!selectedLocation.address || isLoading || outsideTanzania}
+                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                    Confirm Location
+                </button>
             </div>
         </div>
     );
