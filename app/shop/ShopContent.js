@@ -400,20 +400,19 @@ export default function ShopPage() {
         }
     };
 
-    const handleInvestCashback = async (amount, provider, details) => {
-        const result = createInvestment(user?.id || 'guest', amount, provider, details);
-        if (result.success) {
-            // Redirect to dashboard after short delay
-            setTimeout(() => router.push('/user-dashboard'), 2000);
-        }
-    };
+    const handleAllocateCashback = async (allocationData) => {
+        const { investAmount, withdrawAmount, investDetails, withdrawDetails } = allocationData;
 
-    const handleWithdrawCashback = async (amount, phone) => {
-        const result = createWithdrawal(user?.id || 'guest', amount, phone);
-        if (result.success) {
-            // Redirect to dashboard after short delay
-            setTimeout(() => router.push('/user-dashboard'), 2000);
+        if (investAmount > 0) {
+            await createInvestment(user?.id || 'guest', investAmount, investDetails.provider, investDetails);
         }
+
+        if (withdrawAmount > 0) {
+            await createWithdrawal(user?.id || 'guest', withdrawAmount, withdrawDetails.phoneNumber);
+        }
+
+        // Redirect to dashboard after short delay
+        setTimeout(() => router.push('/user-dashboard'), 2000);
     };
 
     const handleScanPayment = async (product) => {
@@ -1017,8 +1016,7 @@ export default function ShopPage() {
                 isOpen={isCashbackModalOpen}
                 onClose={() => setIsCashbackModalOpen(false)}
                 amount={earnedCashback}
-                onInvest={handleInvestCashback}
-                onWithdraw={handleWithdrawCashback}
+                onAllocate={handleAllocateCashback}
             />
 
             {toast && (
