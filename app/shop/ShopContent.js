@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, ShoppingCart, X, Filter, Star, MapPin, Scan, Smartphone, CreditCard, Truck, Bus, Lightbulb, Phone, Sparkles } from 'lucide-react';
+import { Search, ShoppingCart, X, Filter, Star, MapPin, Scan, Smartphone, CreditCard, Truck, Bus, Lightbulb, Phone, Sparkles, Ship } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import ProductCard from '../../components/ProductCard';
 import Modal from '../../components/Modal';
@@ -107,6 +107,18 @@ export default function ShopPage() {
             speedKmh: 60,
             fixedPrice: true,
             maxDistance: null // Unlimited within Tanzania
+        },
+        {
+            id: 'ferry',
+            name: 'Ferry Faster',
+            icon: 'ship',
+            basePrice: 15000,
+            pricePerKm: 0,
+            time: '4-6 hours',
+            speedKmh: 40,
+            fixedPrice: true,
+            isZanzibarOnly: true,
+            maxDistance: null
         }
     ];
 
@@ -255,12 +267,36 @@ export default function ShopPage() {
 
     // Get delivery options with calculated prices
     const getDeliveryOptionsWithPrices = () => {
-        return deliveryOptions.map(option => ({
-            ...option,
-            price: calculateDeliveryPrice(option, deliveryDistance),
-            estimatedTime: calculateDeliveryTime(option, deliveryDistance),
-            isAvailable: !option.maxDistance || !deliveryDistance || deliveryDistance <= option.maxDistance
-        }));
+        const addressText = (deliveryAddress + ' ' + (deliveryLocation?.address || '')).toLowerCase();
+        const isZanzibar = addressText.includes('zanzibar');
+        const isDarEsSalaam = addressText.includes('dar es salaam') || addressText.includes('dar-es-salaam') || addressText.includes('kariakoo');
+
+        return deliveryOptions.map(option => {
+            let isAvailable = !option.maxDistance || !deliveryDistance || deliveryDistance <= option.maxDistance;
+
+            // Zanzibar specific logic
+            if (isZanzibar) {
+                if (option.id === 'bolt' || option.id === 'uber' || option.id === 'bus') {
+                    isAvailable = false;
+                }
+            } else {
+                if (option.isZanzibarOnly) {
+                    isAvailable = false;
+                }
+
+                // Dar es Salaam specific logic
+                if (isDarEsSalaam && option.id === 'bus') {
+                    isAvailable = false;
+                }
+            }
+
+            return {
+                ...option,
+                price: calculateDeliveryPrice(option, deliveryDistance),
+                estimatedTime: calculateDeliveryTime(option, deliveryDistance),
+                isAvailable
+            };
+        });
     };
 
     const addToCart = (product) => {
@@ -444,6 +480,7 @@ export default function ShopPage() {
             case 'banknote': return <CreditCard {...iconProps} />;
             case 'truck': return <Truck {...iconProps} />;
             case 'bus': return <Bus {...iconProps} />;
+            case 'ship': return <Ship {...iconProps} />;
             default: return null;
         }
     };
