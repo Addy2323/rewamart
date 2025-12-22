@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import SplashScreen from './SplashScreen';
+import { CartProvider } from '../context/CartContext';
 
 export default function AppWrapper({ children }) {
     const [showSplash, setShowSplash] = useState(true);
@@ -27,5 +28,9 @@ export default function AppWrapper({ children }) {
         return <SplashScreen onComplete={handleSplashComplete} />;
     }
 
-    return <>{children}</>;
+    return (
+        <CartProvider>
+            {children}
+        </CartProvider>
+    );
 }

@@ -21,6 +21,7 @@ import { createInvestment } from '../../lib/investments';
 import { createWithdrawal } from '../../lib/withdrawals';
 import { getCurrentUser } from '../../lib/auth';
 import CashbackAllocationModal from '../../components/CashbackAllocationModal';
+import { useCart } from '../../context/CartContext';
 
 // Dynamic import for LocationPicker (client-side only due to Leaflet)
 const LocationPicker = dynamic(() => import('../../components/LocationPicker'), {
@@ -33,7 +34,7 @@ export default function ShopPage() {
     const [activeCategory, setActiveCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [products, setProducts] = useState([]);
-    const [cart, setCart] = useState([]);
+    const { cart, addToCart, removeFromCart, clearCart, cartTotal, potentialCashback } = useCart();
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [toast, setToast] = useState(null);
@@ -147,11 +148,6 @@ export default function ShopPage() {
         loadProducts();
     }, [activeCategory, searchQuery]);
 
-    useEffect(() => {
-        // Load cart from storage
-        const savedCart = storage.get(STORAGE_KEYS.CART, []);
-        setCart(savedCart);
-    }, []);
 
     useEffect(() => {
         // Get user from localStorage
@@ -299,25 +295,10 @@ export default function ShopPage() {
         });
     };
 
-    const addToCart = (product) => {
-        const newCart = [...cart, { ...product, cartId: Date.now() }];
-        setCart(newCart);
-        storage.set(STORAGE_KEYS.CART, newCart);
-        setToast({ type: 'success', message: 'Added to cart' });
-    };
-
-    const removeFromCart = (cartId) => {
-        const newCart = cart.filter(item => item.cartId !== cartId);
-        setCart(newCart);
-        storage.set(STORAGE_KEYS.CART, newCart);
-    };
-
-    const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
     const deliveryOptionsWithPrices = getDeliveryOptionsWithPrices();
     const selectedDelivery = deliveryOptionsWithPrices.find(d => d.id === deliveryTransport);
     const deliveryCost = selectedDelivery?.price || 0;
     const finalTotal = cartTotal - referralDiscount + deliveryCost;
-    const potentialCashback = cart.reduce((sum, item) => sum + (item.price * item.cashback), 0);
 
     const handleCheckout = async () => {
         // Check if user is authenticated
@@ -402,8 +383,7 @@ export default function ShopPage() {
                 }
 
                 // Clear cart and selections
-                setCart([]);
-                storage.set(STORAGE_KEYS.CART, []);
+                clearCart();
                 setIsCheckingOut(false);
                 setIsCartOpen(false);
                 setReferralDiscount(0);
@@ -453,9 +433,7 @@ export default function ShopPage() {
 
     const handleScanPayment = async (product) => {
         // Add product to cart instead of direct purchase
-        const newCart = [...cart, { ...product, cartId: Date.now() }];
-        setCart(newCart);
-        storage.set(STORAGE_KEYS.CART, newCart);
+        addToCart(product);
 
         setToast({
             type: 'success',

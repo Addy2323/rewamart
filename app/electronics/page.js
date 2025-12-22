@@ -7,6 +7,7 @@ import ProductCard from '../../components/ProductCard';
 import { getAllProducts } from '../../lib/products';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import Toast from '../../components/Toast';
+import { useCart } from '../../context/CartContext';
 
 export default function ElectronicsPage() {
     const router = useRouter();
@@ -14,7 +15,7 @@ export default function ElectronicsPage() {
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [activeSubcategory, setActiveSubcategory] = useState('all');
-    const [cart, setCart] = useState([]);
+    const { cart, addToCart } = useCart();
     const [toast, setToast] = useState(null);
 
     const subcategories = [
@@ -71,20 +72,6 @@ export default function ElectronicsPage() {
         }
     }, [searchParams, products]);
 
-    // Load cart from storage
-    useEffect(() => {
-        const savedCart = storage.get(STORAGE_KEYS.CART, []);
-        setCart(savedCart);
-    }, []);
-
-    // Add to cart function
-    const addToCart = (product) => {
-        const newCart = [...cart, { ...product, cartId: Date.now() }];
-        setCart(newCart);
-        storage.set(STORAGE_KEYS.CART, newCart);
-        setToast({ type: 'success', message: 'Added to cart' });
-    };
-
     const handleSubcategoryClick = (subcategoryId) => {
         if (subcategoryId === 'all') {
             router.push('/electronics');
@@ -135,7 +122,14 @@ export default function ElectronicsPage() {
                 {filteredProducts.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filteredProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                                onAddToCart={(p) => {
+                                    addToCart(p);
+                                    setToast({ type: 'success', message: 'Added to cart' });
+                                }}
+                            />
                         ))}
                     </div>
                 ) : (

@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { Search, Heart, Package, Tag, Sparkles, ShoppingBag, Headphones, Smartphone, ShirtIcon, ShoppingCart } from 'lucide-react';
 import { storage, STORAGE_KEYS } from '../lib/storage';
 import Toast from '../components/Toast';
+import { useCart } from '../context/CartContext';
 
 export default function HomePage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [flashSaleTime, setFlashSaleTime] = useState({ hours: 12, minutes: 1, seconds: 24 });
     const [products, setProducts] = useState([]);
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [cart, setCart] = useState([]);
+    const { cart, addToCart } = useCart();
     const [toast, setToast] = useState(null);
 
     // Banner slides with Unsplash images
@@ -88,20 +89,6 @@ export default function HomePage() {
 
         return () => clearInterval(slideTimer);
     }, [banners.length]);
-
-    // Load cart from storage
-    useEffect(() => {
-        const savedCart = storage.get(STORAGE_KEYS.CART, []);
-        setCart(savedCart);
-    }, []);
-
-    // Add to cart function
-    const addToCart = (product) => {
-        const newCart = [...cart, { ...product, cartId: Date.now() }];
-        setCart(newCart);
-        storage.set(STORAGE_KEYS.CART, newCart);
-        setToast({ type: 'success', message: `${product.name} added to cart!` });
-    };
 
     const features = [
         { icon: Heart, label: 'Wish List', color: 'bg-pink-100 text-pink-600', link: '/shop' },
@@ -391,6 +378,7 @@ export default function HomePage() {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             addToCart(product);
+                                            setToast({ type: 'success', message: `${product.name} added to cart!` });
                                         }}
                                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors"
                                     >
