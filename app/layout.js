@@ -39,13 +39,6 @@ export const metadata = {
         telephone: false,
     },
     manifest: '/manifest.json',
-    themeColor: '#10b981',
-    viewport: {
-        width: 'device-width',
-        initialScale: 1,
-        maximumScale: 1,
-        userScalable: false,
-    },
     robots: {
         index: true,
         follow: true,
@@ -86,6 +79,14 @@ export const metadata = {
         // google: 'your-google-site-verification-code',
         // bing: 'your-bing-verification-code',
     },
+};
+
+export const viewport = {
+    themeColor: '#10b981',
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
 };
 
 export default function RootLayout({ children }) {
