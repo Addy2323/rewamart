@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, TrendingUp, Users, Settings, Store, BarChart3, Plus, Edit2, Trash2, Search } from 'lucide-react';
+import { Package, TrendingUp, Users, Settings, Store, BarChart3, Plus, Edit2, Trash2, Search, Gift } from 'lucide-react';
 import { getCurrentUser, getUserById, updateUserProfile } from '../../lib/auth';
 import { productsAPI } from '../../lib/api';
 import Toast from '../../components/Toast';
 import Modal from '../../components/Modal';
+import PromotionConfigForm from '../../components/PromotionConfigForm';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { getOrdersByVendor, getVendorStats, ORDER_STATUS } from '../../lib/orders';
 
@@ -617,6 +618,11 @@ export default function VendorDashboard() {
                             <p>No orders yet</p>
                         </div>
                     )}
+                </div>
+
+                {/* Promotions Section */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                    <PromotionConfigForm vendorName={user.name} categories={categories} />
                 </div>
 
                 {/* Product Modal */}

@@ -6,6 +6,7 @@ import { Search, Heart, Package, Tag, Sparkles, ShoppingBag, Headphones, Smartph
 import { storage, STORAGE_KEYS } from '../lib/storage';
 import Toast from '../components/Toast';
 import { useCart } from '../context/CartContext';
+import FirstOrderPopup from '../components/FirstOrderPopup';
 
 export default function HomePage() {
     const [searchQuery, setSearchQuery] = useState('');
@@ -166,6 +167,83 @@ export default function HomePage() {
                             </span>
                         </Link>
                     ))}
+                </div>
+            </div>
+
+            {/* Category Banners Grid */}
+            <div className="px-4 mt-6">
+                <div className="grid grid-cols-2 gap-3">
+                    {/* Men's Shoes */}
+                    <Link
+                        href="/mens-clothing"
+                        className="relative h-32 rounded-2xl overflow-hidden bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-300"
+                    >
+                        <div className="absolute inset-0 p-4 flex flex-col justify-between z-10">
+                            <h3 className="text-lg font-bold text-white">Men's Shoes</h3>
+                            <button className="w-fit px-4 py-1.5 bg-white/30 backdrop-blur-sm text-white text-sm font-medium rounded-full hover:bg-white/40 transition-colors">
+                                View &gt;
+                            </button>
+                        </div>
+                        <img
+                            src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80"
+                            alt="Men's Shoes"
+                            className="absolute right-0 bottom-0 w-28 h-28 object-contain transform translate-x-2 translate-y-2"
+                        />
+                    </Link>
+
+                    {/* Women's Shoes */}
+                    <Link
+                        href="/womens-clothing"
+                        className="relative h-32 rounded-2xl overflow-hidden bg-gradient-to-r from-orange-400 to-orange-500"
+                    >
+                        <div className="absolute inset-0 p-4 flex flex-col justify-between z-10">
+                            <h3 className="text-lg font-bold text-white">Women's Shoes</h3>
+                            <button className="w-fit px-4 py-1.5 bg-white/30 backdrop-blur-sm text-white text-sm font-medium rounded-full hover:bg-white/40 transition-colors">
+                                View &gt;
+                            </button>
+                        </div>
+                        <img
+                            src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&q=80"
+                            alt="Women's Shoes"
+                            className="absolute right-0 bottom-0 w-28 h-28 object-contain transform translate-x-2 translate-y-2"
+                        />
+                    </Link>
+
+                    {/* Phone */}
+                    <Link
+                        href="/electronics"
+                        className="relative h-32 rounded-2xl overflow-hidden bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-300"
+                    >
+                        <div className="absolute inset-0 p-4 flex flex-col justify-between z-10">
+                            <h3 className="text-lg font-bold text-gray-800">Phone</h3>
+                            <button className="w-fit px-4 py-1.5 bg-orange-500 text-white text-sm font-medium rounded-full hover:bg-orange-600 transition-colors">
+                                View &gt;
+                            </button>
+                        </div>
+                        <img
+                            src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80"
+                            alt="Phones"
+                            className="absolute right-0 bottom-0 w-28 h-28 object-contain transform translate-x-2 translate-y-2"
+                        />
+                    </Link>
+
+                    {/* Accessories */}
+                    <Link
+                        href="/electronics"
+                        className="relative h-32 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-400 via-gray-300 to-orange-300"
+                    >
+                        <div className="absolute inset-0 p-4 flex flex-col justify-between z-10">
+                            <h3 className="text-lg font-bold text-gray-800">Accessories</h3>
+                            <button className="w-fit px-4 py-1.5 bg-white/50 backdrop-blur-sm text-gray-700 text-sm font-medium rounded-full hover:bg-white/70 transition-colors">
+                                View &gt;
+                            </button>
+                        </div>
+                        <img
+                            src="https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=400&q=80"
+                            alt="Accessories"
+                            className="absolute right-0 bottom-0 w-28 h-28 object-contain transform translate-x-2 translate-y-2"
+                        />
+                    </Link>
                 </div>
             </div>
 
@@ -403,6 +481,8 @@ export default function HomePage() {
                     onClose={() => setToast(null)}
                 />
             )}
+            {/* Promo Popup (Global/Home) */}
+            <FirstOrderPopup />
         </div >
     );
 }

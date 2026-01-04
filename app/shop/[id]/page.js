@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShoppingCart, Star, Share2, Heart } from 'lucide-react';
 import { productsAPI } from '../../../lib/api';
+import PromoPopup from '../../../components/PromoPopup';
 
 
 export default function ProductDetailsPage({ params }) {
@@ -62,7 +63,8 @@ export default function ProductDetailsPage({ params }) {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
-
+            {/* Promotional Popup - vendor-specific */}
+            {product.vendor && <PromoPopup vendorName={product.vendor} />}
 
             <div className="max-w-7xl mx-auto px-4 py-6">
                 <button
@@ -201,3 +203,4 @@ export default function ProductDetailsPage({ params }) {
         </div>
     );
 }
+

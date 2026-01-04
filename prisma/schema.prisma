@@ -225,3 +225,30 @@ model Referral {
   @@index([referredId])
   @@map("referrals")
 }
+
+// ============================================
+// PROMOTION MODELS
+// ============================================
+
+model Promotion {
+  id              Int       @id @default(autoincrement())
+  vendorName      String    // Must match Product.vendor field
+  title           String
+  description     String?
+  type            String    // "free_shipping", "discount_percent", "discount_fixed", "campaign"
+  discountValue   Float?    // Percentage (e.g., 10 for 10%) or fixed amount in TSh
+  minOrderAmount  Float?    // Minimum order amount to qualify
+  startDate       DateTime
+  endDate         DateTime
+  isActive        Boolean   @default(true)
+  targetCategory  Int?      // Optional: limit to specific category ID
+  targetProductId Int?      // Optional: link directly to a specific product ID
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([vendorName])
+  @@index([isActive])
+  @@index([startDate, endDate])
+  @@map("promotions")
+}
+
