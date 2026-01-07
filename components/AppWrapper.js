@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import SplashScreen from './SplashScreen';
 import { CartProvider } from '../context/CartContext';
+import TawkTo from './TawkTo';
 
 export default function AppWrapper({ children }) {
     const [showSplash, setShowSplash] = useState(true);
@@ -31,6 +32,7 @@ export default function AppWrapper({ children }) {
     return (
         <CartProvider>
             {children}
+            <TawkTo />
         </CartProvider>
     );
 }

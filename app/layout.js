@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import BottomNav from '../components/BottomNav';
 import ThemeProvider from '../components/ThemeProvider';
 import AppWrapper from '../components/AppWrapper';
+import TawkTo from '../components/TawkTo';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -101,6 +102,7 @@ export default function RootLayout({ children }) {
                         </main>
                         <BottomNav />
                     </AppWrapper>
+                    <TawkTo />
                 </ThemeProvider>
             </body>
         </html>
