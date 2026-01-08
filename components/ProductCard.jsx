@@ -1,11 +1,11 @@
 'use client';
 
-import { ShoppingCart, QrCode, Star, Truck } from 'lucide-react';
+import { ShoppingCart, QrCode, Star, Truck, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getAverageRating, getProductReviews } from '../lib/reviews';
 
-export default function ProductCard({ product, onAddToCart, onViewDetails, onQRCode }) {
+export default function ProductCard({ product, onAddToCart, onViewDetails, onQRCode, onChat }) {
     const [avgRating, setAvgRating] = useState(0);
     const [reviewCount, setReviewCount] = useState(0);
 
@@ -113,6 +113,15 @@ export default function ProductCard({ product, onAddToCart, onViewDetails, onQRC
                         <ShoppingCart size={18} />
                         <span>{product.stockCount === 0 ? 'Out of Stock' : 'Add'}</span>
                     </button>
+                    {product.vendorId && (
+                        <button
+                            onClick={() => onChat && onChat(product)}
+                            className="flex items-center justify-center bg-emerald-100 text-emerald-600 hover:bg-emerald-200 py-2.5 px-3 rounded-lg font-bold transition-colors shadow-sm active:scale-95 transform"
+                            title="Chat with Vendor"
+                        >
+                            <MessageSquare size={18} />
+                        </button>
+                    )}
                     <button
                         onClick={() => onQRCode && onQRCode(product)}
                         className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-3 rounded-lg font-bold transition-colors shadow-md active:scale-95 transform"

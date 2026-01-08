@@ -22,6 +22,7 @@ import { createWithdrawal } from '../../lib/withdrawals';
 import { getCurrentUser } from '../../lib/auth';
 import CashbackAllocationModal from '../../components/CashbackAllocationModal';
 import { useCart } from '../../context/CartContext';
+import ChatModal from '../../components/ChatModal';
 
 // Dynamic import for LocationPicker (client-side only due to Leaflet)
 const LocationPicker = dynamic(() => import('../../components/LocationPicker'), {
@@ -60,6 +61,8 @@ export default function ShopPage() {
     const [earnedCashback, setEarnedCashback] = useState(0);
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
     const [orderSuccessOpen, setOrderSuccessOpen] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [chatVendor, setChatVendor] = useState(null);
     const [freeShippingFilter, setFreeShippingFilter] = useState(false);
 
     // Shop location (Kariakoo, Dar es Salaam)
@@ -557,6 +560,10 @@ export default function ShopPage() {
                         onQRCode={(prod) => {
                             setQrProduct(prod);
                             setIsQROpen(true);
+                        }}
+                        onChat={(prod) => {
+                            setChatVendor({ id: prod.vendorId, name: prod.vendor });
+                            setIsChatOpen(true);
                         }}
                     />
                 ))}
@@ -1081,6 +1088,12 @@ export default function ShopPage() {
                     onClose={() => setToast(null)}
                 />
             )}
+            <ChatModal
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+                vendorId={chatVendor?.id}
+                vendorName={chatVendor?.name}
+            />
         </div>
     );
 }

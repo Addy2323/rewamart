@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Package, TrendingUp, Users, Settings, Store, BarChart3, Plus, Edit2, Trash2, Search, Gift } from 'lucide-react';
+import { Package, TrendingUp, Users, Settings, Store, BarChart3, Plus, Edit2, Trash2, Search, Gift, MessageSquare, FileText } from 'lucide-react';
 import { getCurrentUser, getUserById, updateUserProfile } from '../../lib/auth';
 import { productsAPI } from '../../lib/api';
 import Toast from '../../components/Toast';
@@ -11,6 +11,9 @@ import Modal from '../../components/Modal';
 import PromotionConfigForm from '../../components/PromotionConfigForm';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { getOrdersByVendor, getVendorStats, ORDER_STATUS } from '../../lib/orders';
+import ChatList from '../../components/ChatList';
+import ChatModal from '../../components/ChatModal';
+import { generateVendorReport } from '../../lib/reportUtils';
 
 export default function VendorDashboard() {
     const router = useRouter();
@@ -43,6 +46,9 @@ export default function VendorDashboard() {
         subcategory: '',
         images: [],
     });
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const [selectedConversation, setSelectedConversation] = useState(null);
+    const [isChatOpen, setIsChatOpen] = useState(false);
 
     // Subcategory options based on selected category
     const subcategoryOptions = {
@@ -513,11 +519,60 @@ export default function VendorDashboard() {
                         <p className="text-sm text-gray-600 mt-1">View sales reports</p>
                     </Link>
 
-                    <Link href="/customer-reviews" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center">
-                        <Users className="text-purple-600 mx-auto mb-3" size={32} />
-                        <h3 className="font-bold text-gray-900">Customers</h3>
-                        <p className="text-sm text-gray-600 mt-1">Manage customer reviews</p>
-                    </Link>
+                    <button
+                        onClick={() => setActiveTab('messages')}
+                        className={`bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow text-center cursor-pointer border-2 ${activeTab === 'messages' ? 'border-emerald-500' : 'border-transparent'}`}
+                    >
+                        <MessageSquare className="text-purple-600 mx-auto mb-3" size={32} />
+                        <h3 className="font-bold text-gray-900">Messages</h3>
+                        <p className="text-sm text-gray-600 mt-1">Chat with customers</p>
+                    </button>
+                </div>
+
+                {/* Messages Section */}
+                {activeTab === 'messages' && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Customer Conversations</h3>
+                            <button
+                                onClick={() => setActiveTab('dashboard')}
+                                className="text-sm text-emerald-600 font-medium"
+                            >
+                                Back to Dashboard
+                            </button>
+                        </div>
+                        <ChatList
+                            onSelectConversation={(conv) => {
+                                setSelectedConversation(conv);
+                                setIsChatOpen(true);
+                            }}
+                        />
+                    </div>
+                )}
+
+                {/* Reports Section */}
+                <div className="bg-white rounded-xl shadow-md p-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                        <FileText className="text-emerald-600" size={24} />
+                        <h3 className="text-lg font-bold text-gray-900">Sales Reports</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-6">Generate and download PDF reports of your sales activity.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button
+                            onClick={() => generateVendorReport(user.name, vendorOrders, 'daily')}
+                            className="flex items-center justify-center space-x-2 bg-emerald-50 text-emerald-600 border border-emerald-200 py-3 rounded-xl hover:bg-emerald-100 transition-colors font-medium"
+                        >
+                            <FileText size={18} />
+                            <span>Download Daily Report</span>
+                        </button>
+                        <button
+                            onClick={() => generateVendorReport(user.name, vendorOrders, 'weekly')}
+                            className="flex items-center justify-center space-x-2 bg-blue-50 text-blue-600 border border-blue-200 py-3 rounded-xl hover:bg-blue-100 transition-colors font-medium"
+                        >
+                            <FileText size={18} />
+                            <span>Download Weekly Report</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Orders & Payments Section */}
@@ -878,6 +933,13 @@ export default function VendorDashboard() {
                         onClose={() => setToast(null)}
                     />
                 )}
+                <ChatModal
+                    isOpen={isChatOpen}
+                    onClose={() => setIsChatOpen(false)}
+                    vendorId={user?.id}
+                    vendorName={selectedConversation?.customer?.name}
+                    conversationId={selectedConversation?.id}
+                />
             </main>
         </div>
     );

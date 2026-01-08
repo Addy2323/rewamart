@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, Users, Package, TrendingUp, Settings, BarChart3, Shield } from 'lucide-react';
+import { LogOut, Users, Package, TrendingUp, Settings, BarChart3, Shield, FileText } from 'lucide-react';
 import { getCurrentUser, logoutUser, getAllVendors, getAllCustomers } from '../../lib/auth';
 import { getAllProducts } from '../../lib/products';
+import { getAllOrders } from '../../lib/orders';
+import { generateAdminVendorReport } from '../../lib/reportUtils';
 import Toast from '../../components/Toast';
 
 export default function AdminDashboard() {
@@ -14,6 +16,7 @@ export default function AdminDashboard() {
     const [vendors, setVendors] = useState([]);
     const [customers, setCustomers] = useState([]);
     const [products, setProducts] = useState([]);
+    const [orders, setOrders] = useState([]);
     const [toast, setToast] = useState(null);
 
     useEffect(() => {
@@ -27,15 +30,17 @@ export default function AdminDashboard() {
 
             try {
                 // Fetch all data in parallel
-                const [vendorsData, customersData, productsData] = await Promise.all([
+                const [vendorsData, customersData, productsData, ordersData] = await Promise.all([
                     getAllVendors(),
                     getAllCustomers(),
-                    getAllProducts()
+                    getAllProducts(),
+                    getAllOrders()
                 ]);
 
                 setVendors(vendorsData || []);
                 setCustomers(customersData || []);
                 setProducts(productsData || []);
+                setOrders(ordersData || []);
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
                 setToast({ type: 'error', message: 'Failed to load dashboard data' });
@@ -233,6 +238,24 @@ export default function AdminDashboard() {
                                 TZS {totalRevenue.toLocaleString()}
                             </p>
                         </div>
+                    </div>
+                </div>
+
+                {/* Platform Reports */}
+                <div className="bg-white rounded-xl shadow-md p-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                        <FileText className="text-red-600" size={24} />
+                        <h3 className="text-lg font-bold text-gray-900">Platform Reports</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-6">Generate comprehensive reports on platform performance and vendor activity.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button
+                            onClick={() => generateAdminVendorReport(orders, vendors)}
+                            className="flex items-center justify-center space-x-2 bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl hover:bg-red-100 transition-colors font-medium"
+                        >
+                            <FileText size={18} />
+                            <span>Download Vendor Performance Report</span>
+                        </button>
                     </div>
                 </div>
 

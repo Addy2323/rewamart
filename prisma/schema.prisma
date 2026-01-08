@@ -36,7 +36,46 @@ model User {
   cashbacks       Cashback[]
   addresses       Address[]
   
+  // Chat Relations
+  customerConversations ChatConversation[] @relation("CustomerConversations")
+  vendorConversations   ChatConversation[] @relation("VendorConversations")
+  sentMessages          ChatMessage[]      @relation("SentMessages")
+  
+  // Vendor Relations
+  vendorProducts        Product[]          @relation("VendorProducts")
+  
   @@map("users")
+}
+
+// ============================================
+// CHAT MODELS
+// ============================================
+
+model ChatConversation {
+  id          Int           @id @default(autoincrement())
+  customerId  Int
+  vendorId    Int
+  customer    User          @relation("CustomerConversations", fields: [customerId], references: [id])
+  vendor      User          @relation("VendorConversations", fields: [vendorId], references: [id])
+  messages    ChatMessage[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([customerId, vendorId])
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             Int              @id @default(autoincrement())
+  conversationId Int
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       Int
+  sender         User             @relation("SentMessages", fields: [senderId], references: [id])
+  content        String           @db.Text
+  isRead         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+
+  @@map("chat_messages")
 }
 
 // ============================================
@@ -70,6 +109,8 @@ model Product {
   stockCount   Int       @default(0)
   cashbackRate Float     @default(5.0) // percentage
   vendor       String    @default("RewaMart")
+  vendorId     Int?
+  vendorUser   User?     @relation("VendorProducts", fields: [vendorId], references: [id])
   rating       Float     @default(0)
   reviewCount  Int       @default(0)
   createdAt    DateTime  @default(now())

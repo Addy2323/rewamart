@@ -58,13 +58,19 @@ export default function QRCodeModal({ isOpen, onClose, product }) {
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-lg flex justify-center" id="qr-code">
-                    <QRCode 
-                        value={qrValue} 
-                        size={256} 
-                        level="H" 
+                    <QRCode
+                        value={qrValue}
+                        size={256}
+                        level="H"
                         includeMargin={true}
                         fgColor="#047857"
                         bgColor="#ffffff"
+                        imageSettings={{
+                            src: "/images/logo2.png",
+                            height: 50,
+                            width: 50,
+                            excavate: true,
+                        }}
                     />
                 </div>
 
