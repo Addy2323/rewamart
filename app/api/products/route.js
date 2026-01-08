@@ -7,13 +7,30 @@ export const GET = apiHandler(async (request) => {
     const category = searchParams.get('category');
     const vendor = searchParams.get('vendor');
     const search = searchParams.get('search');
+    const freeShipping = searchParams.get('freeShipping') === 'true';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
 
+    // Get vendors with active free shipping promotions
+    let freeShippingVendors = [];
+    if (freeShipping) {
+        const activePromotions = await prisma.promotion.findMany({
+            where: {
+                type: 'free_shipping',
+                isActive: true,
+                startDate: { lte: new Date() },
+                endDate: { gte: new Date() },
+            },
+            select: { vendorName: true },
+        });
+        freeShippingVendors = activePromotions.map(p => p.vendorName);
+    }
+
     const where = {
         ...(category && { category: { slug: category } }),
         ...(vendor && { vendor: vendor }),
+        ...(freeShipping && { vendor: { in: freeShippingVendors } }),
         ...(search && {
             OR: [
                 { name: { contains: search, mode: 'insensitive' } },
@@ -21,6 +38,18 @@ export const GET = apiHandler(async (request) => {
             ],
         }),
     };
+
+    // Get all vendors with active free shipping promotions to mark products
+    const allActiveFreeShippingPromotions = await prisma.promotion.findMany({
+        where: {
+            type: 'free_shipping',
+            isActive: true,
+            startDate: { lte: new Date() },
+            endDate: { gte: new Date() },
+        },
+        select: { vendorName: true },
+    });
+    const allFreeShippingVendors = new Set(allActiveFreeShippingPromotions.map(p => p.vendorName));
 
     const [products, total] = await Promise.all([
         prisma.product.findMany({
@@ -41,8 +70,13 @@ export const GET = apiHandler(async (request) => {
         prisma.product.count({ where }),
     ]);
 
+    const productsWithShippingInfo = products.map(p => ({
+        ...p,
+        hasFreeShipping: allFreeShippingVendors.has(p.vendor)
+    }));
+
     return successResponse({
-        products,
+        products: productsWithShippingInfo,
         pagination: {
             page,
             limit,

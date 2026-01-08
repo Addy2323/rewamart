@@ -1,6 +1,6 @@
 'use client';
 
-import { ShoppingCart, QrCode, Star } from 'lucide-react';
+import { ShoppingCart, QrCode, Star, Truck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getAverageRating, getProductReviews } from '../lib/reviews';
@@ -43,6 +43,13 @@ export default function ProductCard({ product, onAddToCart, onViewDetails, onQRC
                             'bg-blue-500'
                         }`}>
                         {product.stockCount === 0 ? 'Out of Stock' : `Only ${product.stockCount} left`}
+                    </span>
+                )}
+                {/* Free Shipping Badge */}
+                {product.hasFreeShipping && (
+                    <span className="absolute bottom-4 left-4 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold z-10 flex items-center gap-1 shadow-sm">
+                        <Truck size={10} />
+                        FREE Shipping
                     </span>
                 )}
             </Link>

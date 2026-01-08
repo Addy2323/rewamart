@@ -60,6 +60,7 @@ export default function ShopPage() {
     const [earnedCashback, setEarnedCashback] = useState(0);
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
     const [orderSuccessOpen, setOrderSuccessOpen] = useState(false);
+    const [freeShippingFilter, setFreeShippingFilter] = useState(false);
 
     // Shop location (Kariakoo, Dar es Salaam)
     const SHOP_LOCATION = {
@@ -127,18 +128,18 @@ export default function ShopPage() {
         // Load products with dynamic cashback
         const loadProducts = async () => {
             try {
-                const allProducts = await getAllProducts();
-                let filtered = activeCategory === 'all'
-                    ? allProducts
-                    : allProducts.filter(p => p.category === activeCategory);
+                // Use the API with filters
+                const params = new URLSearchParams();
+                if (activeCategory !== 'all') params.append('category', activeCategory);
+                if (searchQuery) params.append('search', searchQuery);
+                if (freeShippingFilter) params.append('freeShipping', 'true');
 
-                if (searchQuery) {
-                    filtered = filtered.filter(p =>
-                        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        (p.vendor && p.vendor.toLowerCase().includes(searchQuery.toLowerCase()))
-                    );
+                const response = await fetch(`/api/products?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.products) {
+                    setProducts(data.products);
                 }
-                setProducts(filtered);
             } catch (error) {
                 console.error('Error loading products:', error);
                 setProducts([]);
@@ -146,13 +147,28 @@ export default function ShopPage() {
         };
 
         loadProducts();
-    }, [activeCategory, searchQuery]);
+    }, [activeCategory, searchQuery, freeShippingFilter]);
 
 
     useEffect(() => {
         // Get user from localStorage
         const userData = storage.get(STORAGE_KEYS.USER);
         setUser(userData);
+
+        // Check for filters in URL
+        const params = new URLSearchParams(window.location.search);
+        const filter = params.get('filter');
+        if (filter === 'free_shipping') {
+            setFreeShippingFilter(true);
+        }
+        const search = params.get('search');
+        if (search) {
+            setSearchQuery(search);
+        }
+        const category = params.get('category');
+        if (category) {
+            setActiveCategory(category);
+        }
 
         // Fetch recommended products if user is logged in
         if (userData?.id) {
@@ -266,6 +282,7 @@ export default function ShopPage() {
         const addressText = (deliveryAddress + ' ' + (deliveryLocation?.address || '')).toLowerCase();
         const isZanzibar = addressText.includes('zanzibar');
         const isDarEsSalaam = addressText.includes('dar es salaam') || addressText.includes('dar-es-salaam') || addressText.includes('kariakoo');
+        const allItemsHaveFreeShipping = cart.length > 0 && cart.every(item => item.hasFreeShipping);
 
         return deliveryOptions.map(option => {
             let isAvailable = !option.maxDistance || !deliveryDistance || deliveryDistance <= option.maxDistance;
@@ -286,11 +303,15 @@ export default function ShopPage() {
                 }
             }
 
+            const calculatedPrice = calculateDeliveryPrice(option, deliveryDistance);
+            const finalPrice = allItemsHaveFreeShipping ? 0 : calculatedPrice;
+
             return {
                 ...option,
-                price: calculateDeliveryPrice(option, deliveryDistance),
+                price: finalPrice,
                 estimatedTime: calculateDeliveryTime(option, deliveryDistance),
-                isAvailable
+                isAvailable,
+                isFree: allItemsHaveFreeShipping
             };
         });
     };
@@ -494,8 +515,11 @@ export default function ShopPage() {
                         {categories.map(cat => (
                             <button
                                 key={cat.id}
-                                onClick={() => setActiveCategory(cat.id)}
-                                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === cat.id
+                                onClick={() => {
+                                    setActiveCategory(cat.id);
+                                    setFreeShippingFilter(false);
+                                }}
+                                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === cat.id && !freeShippingFilter
                                     ? 'bg-emerald-600 text-white shadow-md'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                     }`}
@@ -503,6 +527,18 @@ export default function ShopPage() {
                                 {cat.label}
                             </button>
                         ))}
+                        <button
+                            onClick={() => {
+                                setFreeShippingFilter(!freeShippingFilter);
+                                setActiveCategory('all');
+                            }}
+                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${freeShippingFilter
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                }`}
+                        >
+                            Free Shipping
+                        </button>
                     </div>
                 </div>
             </div>
@@ -725,8 +761,12 @@ export default function ShopPage() {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <span className="font-bold text-emerald-600 block">TZS {option.price.toLocaleString()}</span>
-                                            {deliveryDistance && (
+                                            {option.isFree ? (
+                                                <span className="font-bold text-emerald-600 block">FREE Delivery</span>
+                                            ) : (
+                                                <span className="font-bold text-emerald-600 block">TZS {option.price.toLocaleString()}</span>
+                                            )}
+                                            {deliveryDistance && !option.isFree && (
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     {option.fixedPrice ? '(Fixed Price)' : `(${option.pricePerKm}/km)`}
                                                 </span>

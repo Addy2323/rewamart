@@ -26,6 +26,7 @@ export default function Navbar() {
 
     const navItems = [
         { name: 'All', href: '/shop' },
+        { name: 'Free Shipping', href: '/shop?filter=free_shipping' },
         { name: 'Deals', href: '/shop?category=deals' },
         { name: "Men's Clothes", href: '/mens-clothing' },
         { name: "Women's Clothes", href: '/womens-clothing' },
